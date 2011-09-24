@@ -3,6 +3,7 @@
 module Main where
 
 import Here (here)
+import Parse
 import System.Environment
 
 -- The multiline string stuff confuses Emacs :(
@@ -13,6 +14,7 @@ usage =
 usage: cow <command>
 where <command> is one of:
   - help
+  - parse
 
 For more information on the commands, use cow help <command>.
 |]
