@@ -11,27 +11,41 @@ function diffTree(tree) {
 			var diff = iterator.next();
 			if (diff.operation == Constants.ADD) {
 				var parser = new ParseTree(diff.body).iterator();
-				var indices = diff.indices;
-				var current = statements[indices[0]];
-				for(var i = 1; i < indices.length - 1; i++) {
-					current = current.get(indices[i]);
-				}
-				var offset = 0;
-				while (parser.hasNext()) {
-					var statement = parser.next();
-					statement.insertStatement();
-					current.insert(statement, indices[i]);
+				var indices = diff.location;
+				if (indices.length > 1) {
+					var current = statements[indices[0]];
+					for(var i = 1; i < indices.length - 1; i++) {
+						current = current.get(indices[i]);
+					}
+					while (parser.hasNext()) {
+						var statement = parser.next();
+						statement.insertStatement();
+						current.insert(statement, indices[i]);
+					}
+				} else {
+					inserted[indices[0]] = parser;
 				}
 			} else if (diff.operation == Constants.REMOVE) {
-				var indices = diff.indices;
+				var indices = diff.location;
 				var current = statements[indices[0]];
 				for(var i = 1; i < indices.length; i++) {
 					current = current.get(indices[i]);
 				}
 				current.deleteStatement();
-			} else if (diff.operation == Constants.INSERT) {
-				var parser = new ParseTree(diff.body);
-				inserted[diff.indices[0]] = parser;
+			} else if (diff.operation == Constants.MODIFICATION) {
+				var statement = Statics.parseObject(diff.body);
+				console.log(statement.getText());
+				statement.insertStatement();
+				var indices = diff.location;
+				if (indices.length > 1) {
+					var current = statements[indices[0]];
+					for(var i = 1; i < indices.length - 1; i++) {
+						current = current.get(indices[i]);
+					}
+					current.replace(indices[i], statement);
+				} else {
+					statements[indices[0]] = statement;
+				}
 			}
 		}
 		for(var j = inserted.length; j >= 0; j--) {

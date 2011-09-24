@@ -32,6 +32,9 @@ function Statement(value, type, id, body) {
 	this.isConstant = function() {
 		return type == Constants.NUMBER || type == Constants.STRING;
 	}
+	this.replace = function(pos, statement) {
+		body[pos] = statement;
+	}
 	this.isComment = function() {
 		return type == Constants.COMMENT;
 	}
@@ -97,10 +100,10 @@ function Statement(value, type, id, body) {
 			} else {
 				div.removeClass(Constants.STATEMENT_HOLDER_CLASS);
 				if (deleted) {
-					span.addClass(Constants.REMOVED_CLASS);
+					div.addClass(Constants.REMOVED_CLASS);
 				}
 				if (inserted) {
-					span.addClass(Constants.INSERTED_CLASS);
+					div.addClass(Constants.INSERTED_CLASS);
 				}
 			}
 			var span = Statics.getOpenFuncNode(id);
@@ -120,7 +123,7 @@ function Statement(value, type, id, body) {
 				}
 				if (wasFunction && !next.isFunction() && !next.isKeyword()) {
 					div.append(Statics.getBreakNode());
-					div.append(Statics.getWhitespaceNode(indent));
+					div.append(Statics.getWhitespaceNode(indent + 4));
 				} else if (!next.isFunction()) {
 					span.removeClass(Constants.STATEMENT_HOLDER_CLASS);
 				}

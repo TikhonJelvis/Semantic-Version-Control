@@ -31,15 +31,15 @@ var Constants = {
 	HIGHLIGHTED_CLASS: "svc-highlighted-class",
 	REMOVED_CLASS: "svc-removed-class",
 	INSERTED_CLASS: "svc-inserted-class",
-	ADD: "add",
+	ADD: "insertion",
 	REMOVE: "remove",
 	INSERT: "insert",
 	MOVE: "move",
 	RENAME: "rename",
-	DIFF_URL: "http://localhost:8080/diff/",
-	FILE_LIST_URL: "http://localhost:8080/commit",
-	FILE_URL: "http://localhost:8080/commit/",
-	FILE_DIFF_URL: "filediff.php",
+	DIFF_URL: "diff.html?",
+	FILE_LIST_URL: "files.php?",
+	FILE_URL: "file.php?",
+	FILE_DIFF_URL: "filediff.php?",
 	A_HTML: "<a></a>",
 	BR: "<br/>",
 	FIRST_FILE: "file1",
@@ -47,5 +47,6 @@ var Constants = {
 	FIRST_FILE_VERSION: "file1version",
 	SECOND_FILE_VERSION: "file2version",
 	PATH: "path",
-	VERSION: "version"
+	VERSION: "version",
+	MODIFICATION: "modification"
 };

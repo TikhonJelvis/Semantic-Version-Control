@@ -1,166 +1,418 @@
 
-var parseTree = new ParseTree([
-	{
-			value: "(define num 5)",
-			type: "function",
-			id: 1,
-			body: [
-				{
-					value: "define",
-					type: "keyword",
-					id: 2
-				},
-				{
-					value: "num",
-					type: "variable",
-					id: 3
-				},
-				{
-					value: "5",
-					type: "number",
-					id: 4
-				}
-			]
-	},
-	{
-			value: "(do (some stuff (with)) depth)",
-			type: "function",
-			id: 5,
-			body: [
-				{
-					value: "do",
-					type: "variable",
-					id: 6	
-				},
-				{
-					value: "(some stuff (num))",
-					type: "function",
-					id: 7,
-					body: [
-						{
-							value: "some",
-							type: "variable",
-							id: 8
-						},
-						{
-							value: "stuff",
-							type: "variable",
-							id: 9
-						},
-						{
-							value: "(num)",
-							type: "function",
-							id: 10,
-							body: [
-								{
-									value: "num",
-									type: "variable",
-									id: 3
-								}
-							]
-						}
-					]
-				},
-				{
-					value: "depth",
-					type: "variable",
-					id: 12
-				}
-			]
-	}
-	]);
-var diffTree = new diffTree([
-		{
-			operation: 'add',
-			indices: [
-				1, 1, 2
-			],
-			body: [
-					{
-						value: "hello",
-						type: "variable",
-						id: 13
-					},
-					{
-						value: "world",
-						type: "variable",
-						id: 14
-					},
-			]
-		},
-		{
-			operation: 'insert',
-			indices: [
-				1
-			],
-			body: [	
-					{
-						value: "(top-level insert)",
-						type: "function",
-						id: 15,
-						body: [		
-							{
-								value: "top-level",
-								type: "variable",
-								id: 16
-							},
-							{
-								value: "insert",
-								type: "variable",
-								id: 17
-							}
-						]
-					},
-					{
-						value: "(you-can insert (multiple (statements)))",
-						type: "function",
-						id: 18,
-						body: [	
-							{
-								value: "you-can",
-								type: "variable",
-								id: 19
-							},
-							{
-								value: "insert",
-								type: "variable",
-								id: 17
-							},	
-							{
-								value: "(multiple (statements))",
-								type: "function",
-								id: 21,
-								body: [
-									{
-										value: "multiple",
-										type: "variable",
-										id: 22
-									},
-									{
-										value: "(statements)",
-										type: "function",
-										id: 23,
-										body: [
-											{
-												value: "statements",
-												type: "variable",
-												id: 24
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-			]
-		},
-		{
-			operation: 'remove',
-			indices: [
-				1, 1, 2
-			]
-		}
-	]);
+var parseTree = new ParseTree({
+  "id":4,
+  "parents":[3],
+  "body":[{
+    "id":8,
+    "type":"list",
+    "value":"(define list (lambda args args))",
+    "body":[{
+      "id":2,
+      "type":"keyword",
+      "value":"define",
+      "body":[]
+    },{
+      "id":3,
+      "type":"variable",
+      "value":"list",
+      "body":[]
+    },{
+      "id":7,
+      "type":"list",
+      "value":"(lambda args args)",
+      "body":[{
+        "id":5,
+        "type":"keyword",
+        "value":"lambda",
+        "body":[]
+      },{
+        "id":6,
+        "type":"variable",
+        "value":"args",
+        "body":[]
+      },{
+        "id":6,
+        "type":"variable",
+        "value":"args",
+        "body":[]
+      }]
+    }]
+  },{
+    "id":34,
+    "type":"list",
+    "value":"(define (map fn ls) (if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls)))))",
+    "body":[{
+      "id":11,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":14,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":11,
+        "type":"variable",
+        "value":"map",
+        "body":[]
+      },{
+        "id":12,
+        "type":"variable",
+        "value":"fn",
+        "body":[]
+      },{
+        "id":13,
+        "type":"variable",
+        "value":"ls",
+        "body":[]
+      }]
+    },{
+      "id":33,
+      "type":"list",
+      "value":"(if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls))))",
+      "body":[{
+        "id":15,
+        "type":"keyword",
+        "value":"if",
+        "body":[]
+      },{
+        "id":18,
+        "type":"list",
+        "value":"(null? ls)",
+        "body":[{
+          "id":17,
+          "type":"variable",
+          "value":"null?",
+          "body":[]
+        },{
+          "id":13,
+          "type":"variable",
+          "value":"ls",
+          "body":[]
+        }]
+      },{
+        "id":19,
+        "type":"keyword",
+        "value":"nil",
+        "body":[]
+      },{
+        "id":32,
+        "type":"list",
+        "value":"(cons (fn (car ls)) (map fn (cdr ls)))",
+        "body":[{
+          "id":21,
+          "type":"variable",
+          "value":"cons",
+          "body":[]
+        },{
+          "id":26,
+          "type":"list",
+          "value":"(fn (car ls))",
+          "body":[{
+            "id":12,
+            "type":"variable",
+            "value":"fn",
+            "body":[]
+          },{
+            "id":25,
+            "type":"list",
+            "value":"(car ls)",
+            "body":[{
+              "id":24,
+              "type":"variable",
+              "value":"car",
+              "body":[]
+            },{
+              "id":13,
+              "type":"variable",
+              "value":"ls",
+              "body":[]
+            }]
+          }]
+        },{
+          "id":31,
+          "type":"list",
+          "value":"(map fn (cdr ls))",
+          "body":[{
+            "id":11,
+            "type":"variable",
+            "value":"map",
+            "body":[]
+          },{
+            "id":12,
+            "type":"variable",
+            "value":"fn",
+            "body":[]
+          },{
+            "id":30,
+            "type":"list",
+            "value":"(cdr ls)",
+            "body":[{
+              "id":29,
+              "type":"variable",
+              "value":"cdr",
+              "body":[]
+            },{
+              "id":13,
+              "type":"variable",
+              "value":"ls",
+              "body":[]
+            }]
+          }]
+        }]
+      }]
+    }]
+  },{
+    "id":39,
+    "type":"list",
+    "value":"(define str \"string\")",
+    "body":[{
+      "id":36,
+      "type":"keyword",
+      "value":"define",
+      "body":[]
+    },{
+      "id":37,
+      "type":"variable",
+      "value":"str",
+      "body":[]
+    },{
+      "id":38,
+      "type":"string",
+      "value":"string",
+      "body":[]
+    }]
+  },{
+    "id":44,
+    "type":"list",
+    "value":"(define x 1.0)",
+    "body":[{
+      "id":41,
+      "type":"keyword",
+      "value":"define",
+      "body":[]
+    },{
+      "id":42,
+      "type":"variable",
+      "value":"x",
+      "body":[]
+    },{
+      "id":43,
+      "type":"number",
+      "value":"1.0",
+      "body":[]
+    }]
+  },{
+    "id":48,
+    "type":"list",
+    "value":"(define x 2.0)",
+    "body":[{
+      "id":46,
+      "type":"keyword",
+      "value":"define",
+      "body":[]
+    },{
+      "id":42,
+      "type":"variable",
+      "value":"x",
+      "body":[]
+    },{
+      "id":47,
+      "type":"number",
+      "value":"2.0",
+      "body":[]
+    }]
+  },{
+    "id":52,
+    "type":"list",
+    "value":"(lambda (x) x)",
+    "body":[{
+      "id":51,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":52,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":51,
+        "type":"variable",
+        "value":"x",
+        "body":[]
+      }]
+    },{
+      "id":51,
+      "type":"variable",
+      "value":"x",
+      "body":[]
+    }]
+  },{
+    "id":59,
+    "type":"list",
+    "value":"(lambda (y) (+ x y))",
+    "body":[{
+      "id":55,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":56,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":55,
+        "type":"variable",
+        "value":"y",
+        "body":[]
+      }]
+    },{
+      "id":58,
+      "type":"list",
+      "value":"(+ x y)",
+      "body":[{
+        "id":57,
+        "type":"variable",
+        "value":"+",
+        "body":[]
+      },{
+        "id":42,
+        "type":"variable",
+        "value":"x",
+        "body":[]
+      },{
+        "id":55,
+        "type":"variable",
+        "value":"y",
+        "body":[]
+      }]
+    }]
+  },{
+    "id":60,
+    "type":"comment",
+    "value":" Whoah, is comment! is really crazy!!",
+    "body":[]
+  },{
+    "id":71,
+    "type":"list",
+    "value":"(lambda (a) (lambda (b) (+ a b x)))",
+    "body":[{
+      "id":63,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":64,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":63,
+        "type":"variable",
+        "value":"a",
+        "body":[]
+      }]
+    },{
+      "id":70,
+      "type":"list",
+      "value":"(lambda (b) (+ a b x))",
+      "body":[{
+        "id":66,
+        "type":"keyword",
+        "value":"lambda",
+        "body":[]
+      },{
+        "id":67,
+        "type":"list",
+        "value":"",
+        "body":[{
+          "id":66,
+          "type":"variable",
+          "value":"b",
+          "body":[]
+        }]
+      },{
+        "id":69,
+        "type":"list",
+        "value":"(+ a b x)",
+        "body":[{
+          "id":68,
+          "type":"variable",
+          "value":"+",
+          "body":[]
+        },{
+          "id":63,
+          "type":"variable",
+          "value":"a",
+          "body":[]
+        },{
+          "id":66,
+          "type":"variable",
+          "value":"b",
+          "body":[]
+        },{
+          "id":42,
+          "type":"variable",
+          "value":"x",
+          "body":[]
+        }]
+      }]
+    }]
+  }]
+});
+var diffTree = new diffTree({
+  "base":{
+    "id":4,
+    "parents":[3],
+    "body":[{
+      "id":2,
+      "type":"comment",
+      "value":"()",
+      "body":[]
+    }]
+  },
+  "changeset":[{
+    "location":[0],
+    "oldBody":{
+      "id":2,
+      "type":"comment",
+      "value":"()",
+      "body":[]
+    },
+    "body":{
+      "id":5,
+      "type":"list",
+      "value":"(define (id n) n)",
+      "body":[{
+        "id":3,
+        "type":"keyword",
+        "value":"lambda",
+        "body":[]
+      },{
+        "id":5,
+        "type":"list",
+        "value":"",
+        "body":[{
+          "id":3,
+          "type":"variable",
+          "value":"id",
+          "body":[]
+        },{
+          "id":4,
+          "type":"variable",
+          "value":"n",
+          "body":[]
+        }]
+      },{
+        "id":4,
+        "type":"variable",
+        "value":"n",
+        "body":[]
+      }]
+    },
+    "operation":"modification"
+  }],
+  "annotations":[]
+});
 var iterator = parseTree.iterator();
 while (iterator.hasNext()) {
 	var node = iterator.next().getPrettyNode();

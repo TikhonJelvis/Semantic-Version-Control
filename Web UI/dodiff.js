@@ -17,23 +17,14 @@ $.extend({
 var allVars = $.getUrlVars();
 $.getJSON(Constants.FILE_URL + allVars[Constants.FIRST_FILE], 
 	function(json) {
-		var parseTree = new ParseTree(json.data);
+		var parseTree = new ParseTree(json);
 		tree1 = [];
 		var iterator = parseTree.iterator();
 		var holder = $(Constants.DIV);
 		holder.addClass(Constants.HOLDER_CLASS);
 		var div = $(Constants.DIV);
 		div.addClass(Constants.TITLE_CLASS);
-		div.text(json.path + "(" + json.currentVersion + ")");
-		for (var i = 0; i < json.versions.length; i++) {
-			var a = $(Constants.A_HTML);
-			var url = window.location.href;
-			url = url.replace(Constants.FIRST_FILE_VERSION + "=" + allVars[Constants.FIRST_FILE_VERSION],
-				Constants.FIRST_FILE_VERSION + "=" + json.versions[i]);
-			a.text(json.versions[i]);
-			a.attr({"style": "margin-left: 10px", "href" : url });
-			div.append($(Constants.SPAN).append(a));
-		}
+		div.text(json.id);
 		div.append($(Constants.SPAN).append(Statics.getButtons(tree1)));
 		holder.append(div);
 		while (iterator.hasNext()) {
@@ -49,20 +40,11 @@ $.getJSON(Constants.FILE_URL + allVars[Constants.FIRST_FILE],
 					holder.addClass(Constants.HOLDER_CLASS);
 					var div = $(Constants.DIV);
 					div.addClass(Constants.TITLE_CLASS);
-					div.text(json2.path + "(" + json2.currentVersion + ")");
-					for (var i = 0; i < json2.versions.length; i++) {
-						var a = $(Constants.A_HTML);
-						var url = window.location.href;
-						url = url.replace(Constants.SECOND_FILE_VERSION + "=" + allVars[Constants.SECOND_FILE_VERSION],
-							Constants.SECOND_FILE_VERSION + "=" + json2.versions[i]);
-						a.text(json2.versions[i]);
-						a.attr({"style": "margin-left: 10px", "href" : url });
-						div.append($(Constants.SPAN).append(a));
-					}
+					div.text(json2.id);
 					tree2 = [];
 					div.append($(Constants.SPAN).append(Statics.getButtons(tree2)));
 					holder.append(div);
-					var iterator = new ParseTree(json2.data).iterator();
+					var iterator = new ParseTree(json2).iterator();
 					while (iterator.hasNext()) {
 						var node = iterator.next();
 						holder.append(node.getPrettyNode());
@@ -78,7 +60,7 @@ $.getJSON(Constants.FILE_URL + allVars[Constants.FIRST_FILE],
 						holder.addClass(Constants.HOLDER_CLASS);
 						var div = $(Constants.DIV);
 						div.addClass(Constants.TITLE_CLASS);
-						div.text("Diff: " + json.path + "(" + json.currentVersion + ")---" + json2.path + "(" + json2.currentVersion + ")");
+						div.text("Diff: " + json.id + ")---" + json2.id);
 						holder.append(div);
 						var tree = new diffTree(js);
 						var iterator = tree.parseFrom(parseTree);

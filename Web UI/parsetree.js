@@ -6,10 +6,10 @@ function ParseTree(tree) {
 		return new function() {
 			var index = 0;
 			this.hasNext = function() {
-				return !!tree[index];
+				return !!tree.body[index];
 			};
 			this.next = function() {
-				return Statics.parseObject(tree[index++]);
+				return Statics.parseObject(tree.body[index++]);
 			};
 			this.reset = function() {
 				index = 0;
