@@ -9,4 +9,6 @@
 (lambda (x) x)
 (lambda (y) (+ x y));; Whoah, is comment! is crazy!
 (lambda (a) (lambda (b) (+ a b x)))
+(define (a b) (+ b x));; It's not new any more.
+
 
