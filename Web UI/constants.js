@@ -2,7 +2,7 @@
 	An enum of constants used commonly by all files. Put any classes, id prefixes, or other text here.
 */
 var Constants = {
-	FUNCTION: "function",
+	FUNCTION: "list",
 	KEYWORD: "keyword",
 	OPEN_PAREN_CLASS: "svc-open-paren-class",
 	OPEN_PAREN_ID_PREFIX: "svc-open-paren-",
@@ -28,5 +28,19 @@ var Constants = {
 	REMOVED_CLASS: "svc-removed-class",
 	INSERTED_CLASS: "svc-inserted-class",
 	ADD: "add",
-	REMOVE: "remove"
+	REMOVE: "remove",
+	INSERT: "insert",
+	MOVE: "move",
+	RENAME: "rename",
+	DIFF_URL: "diff.html?",
+	FILE_LIST_URL: "files.php",
+	FILE_URL: "file.php",
+	A_HTML: "<a></a>",
+	BR: "<br/>",
+	FIRST_FILE: "file1",
+	SECOND_FILE: "file2",
+	FIRST_FILE_VERSION: "file1version",
+	SECOND_FILE_VERSION: "file2version",
+	PATH: "path",
+	VERSION: "version"
 };

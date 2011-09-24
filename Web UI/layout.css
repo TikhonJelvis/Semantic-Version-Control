@@ -1,9 +1,6 @@
 body {
 	background-color: black;
-}
-.svc-open-paren-class, .svc-close-paren-class {
 	color: #FFF;
-	font-weight: bold;
 }
 .svc-statement-holder-class {
 	left: 10px;
@@ -19,12 +16,18 @@ body {
 .svc-constant-class {
 	color: #00F;
 }
-.svc-highlighted-class {
-	color: #F00;
+.svc-inserted-class {
+	color: #0F0;
+	text-decoration: underline;
 }
 .svc-removed-class {
 	color: #F00;
+	text-decoration: line-through;
 }
-.svc-inserted-class {
-	color: #0F0;
+.svc-highlighted-class {
+	color: #F00;
+}
+.svc-open-paren-class, .svc-close-paren-class {
+	color: #FFF;
+	font-weight: bold;
 }
