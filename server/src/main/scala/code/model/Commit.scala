@@ -9,9 +9,8 @@ import json._
 
 import scala.xml.Node
 
-case class Commit(id: Int, parents: List[Int], tree: FileTree)
-case class FileTree(id: Int, children: List[FileTree], file: List[Expression])
-case class Expression(id: Int, `type`: List[String], value: String, body: List[Expression])
+case class Commit(id: Int, parents: List[Int], body: List[Expression])
+case class Expression(id: Int, `type`: String, value: String, body: List[Expression])
 case class Diff(base: Commit, changeset: List[Change])
 trait Change
 case class Insertion(location: List[Int], body: Expression, operation: String = "insertion") extends Change
@@ -30,9 +29,9 @@ object Commit {
 
   def unapply(in: JValue): Option[Commit] = apply(in)
 
-  def unapply(in: Any): Option[(Int, List[Int], FileTree)] = {
+  def unapply(in: Any): Option[(Int, List[Int], List[Expression])] = {
     in match {
-      case commit: Commit => Some((commit.id, commit.parents, commit.tree))
+      case commit: Commit => Some((commit.id, commit.parents, commit.body))
       case _ => None
     }
   }
@@ -45,20 +44,28 @@ object Commit {
 
   def allCommits: Seq[Commit] = commits
 
-  private def data =
-"""
-[{"id": 1, "parents": [], "tree":
-   { "id": 1, "children": [], "file":
-     [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
-       [{ "id": 1, "type": ["keyword"], "value": "define" },
-        { "id": 2, "type": ["symbol"], "value": "foo" }]}]}},
- {"id": 2, "parents": [1], "tree":
-    { "id": 1, "children": [], "file":
-      [{ "id": 1, "type": ["function"], "value": "(define foo ())", "body":
-        [{ "id": 1, "type": ["keyword"], "value": "define" },
-         { "id": 5, "type": ["symbol"], "value": "foo" },
-         { "id": 3, "type": ["arguments"], "value": "()" }]},
-       { "id": 2, "type": ["comment"], "value": "hello world!" }]}}]"""
+  private def data = "[]"
+// """
+// [{"id": 1, "parents": [], "tree":
+//    { "id": 1, "children": [], "file":
+//      [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
+//        [{ "id": 1, "type": ["keyword"], "value": "define" },
+//         { "id": 2, "type": ["symbol"], "value": "foo" }]}]}},
+//  {"id": 2, "parents": [1], "tree":
+//     { "id": 1, "children": [], "file":
+//       [{ "id": 1, "type": ["function"], "value": "(define foo (x) (+ x 1))", "body":
+//         [{ "id": 1, "type": ["keyword"], "value": "define" },
+//          { "id": 2, "type": ["symbol"], "value": "foo" },
+//          { "id": 3, "type": ["arguments"], "value": "()", "body": [] }]},
+//        { "id": 2, "type": ["function"], "value": "(define bar)", "body":
+//         [{ "id": 1, "type": ["keyword"], "value": "define" },
+//          { "id": 2, "type": ["symbol"], "value": "bar" }]}]}},
+//  {"id": 3, "parents": [1], "tree":
+//     { "id": 1, "children": [], "file":
+//       [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
+//         [{ "id": 1, "type": ["keyword"], "value": "define" },
+//          { "id": 2, "type": ["symbol"], "value": "foo" }]},
+//        { "id": 2, "type": ["comment"], "value": "; hello world!" }]}}]"""
 
   def find(id: Int): Box[Commit] = synchronized {
     commits.find(_.id == id)
@@ -71,7 +78,7 @@ object Commit {
           case parentId :: _ =>
             Commit.find(parentId) match {
               case Full(parent) =>
-                Full(Diff(parent, exprListDiff(parent.tree.file, commit.tree.file, List(0))))
+                Full(Diff(parent, exprListDiff(parent.body, commit.body, List(0))))
               case _ =>
                 Empty
             }
@@ -109,31 +116,20 @@ object Commit {
     }
   }
 
-  def search(str: String): List[Commit] = {
-    throw new UnsupportedOperationException
-  }
-}
-
-object FileTree {
-  private implicit val formats =
-    net.liftweb.json.DefaultFormats
-
-  def apply(in: JValue): Box[FileTree] = Helpers.tryo{in.extract[FileTree]}
-
-  def unapply(in: JValue): Option[FileTree] = apply(in)
-
-  def unapply(in: Any): Option[(Int, List[FileTree], List[Expression])] = {
-    in match {
-      case fileTree: FileTree => Some((fileTree.id, fileTree.children, fileTree.file))
-      case _ => None
+  def add(exprs: List[Expression]): Commit = {
+    synchronized {
+      val (commitId, parents) = commits match {
+        case Nil => (1, List())
+        case _ => (commits.last.id + 1, List(commits.last.id))
+      }
+      val commit = Commit(commitId, parents, exprs)
+      Commit.add(commit)
     }
   }
 
-  implicit def toJson(fileTree: FileTree): JValue =
-    Extraction.decompose(fileTree)
-
-  implicit def toJson(fileTrees: Seq[FileTree]): JValue =
-    Extraction.decompose(fileTrees)
+  def search(str: String): List[Commit] = {
+    throw new UnsupportedOperationException
+  }
 }
 
 object Expression {
@@ -144,7 +140,7 @@ object Expression {
 
   def unapply(in: JValue): Option[Expression] = apply(in)
 
-  def unapply(in: Any): Option[(Int, List[String], String, List[Expression])] = {
+  def unapply(in: Any): Option[(Int, String, String, List[Expression])] = {
     in match {
       case expr: Expression => Some((expr.id, expr.`type`, expr.value, expr.body))
       case _ => None
