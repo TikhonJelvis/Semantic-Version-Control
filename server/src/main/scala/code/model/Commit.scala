@@ -47,10 +47,16 @@ object Commit {
   private def data =
 """
 [{"id": 1, "parents": [], "tree":
-   { "id": 2, "children": [], "file":
-     [{ "id": 3, "type": ["function"], "value": "(define foo)", "body":
-       [{ "id": 4, "type": ["keyword"], "value": "define" },
-        { "id": 5, "type": ["symbol"], "value": "foo" }]}]}}]"""
+   { "id": 1, "children": [], "file":
+     [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
+       [{ "id": 1, "type": ["keyword"], "value": "define" },
+        { "id": 2, "type": ["symbol"], "value": "foo" }]}]}},
+ {"id": 2, "parents": [1], "tree":
+    { "id": 1, "children": [], "file":
+      [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
+        [{ "id": 1, "type": ["keyword"], "value": "define" },
+         { "id": 2, "type": ["symbol"], "value": "foo" },
+         { "id": 3, "type": ["arguments"], "value": "()" }]}]}}]"""
 
   def find(id: Int): Box[Commit] = synchronized {
     commits.find(_.id == id)
@@ -58,7 +64,12 @@ object Commit {
 
   def diff(id: Int): Box[Diff] = {
     Commit.find(id).map {
-      commit => Diff(commit, List()) // TODO: make this actually do a diff
+      commit => commit.parents match {
+        case parent :: _ =>
+          Diff(commit, List(Insertion(List(1, 1, 3), List())))
+        case Nil =>
+          Diff(commit, List())
+      }
     }
   }
 
