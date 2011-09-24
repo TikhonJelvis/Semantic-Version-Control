@@ -12,23 +12,29 @@ import Helpers._
 import json._
 import scala.xml._
 
-/**
- * A full REST example
- */
-object FullRest extends RestHelper {
+object RestHandler extends RestHelper {
 
-  // Serve /api/item and friends
-  serve( "api" / "item" prefix {
-    
+  serve( List("commit") prefix {
+/*
     // /api/item returns all the items
     case Nil JsonGet _ => Item.inventoryItems: JValue
 
     // /api/item/count gets the item count
     case "count" :: Nil JsonGet _ => JInt(Item.inventoryItems.length)
-
+*/
     // /api/item/item_id gets the specified item (or a 404)
-    case Item(item) :: Nil JsonGet _ => item: JValue
+    case "id" :: id :: Nil Get _ =>
+      for {
+        commit <- Commit.find(id.toInt)
+      } yield commit: JValue
 
+/*Commit.find(id.toInt) match {
+      case Some(c) =>
+        Commit.toJson(c)
+      case None =>
+        JNothing
+    }
+*//*
     // /api/item/search/foo or /api/item/search?q=foo
     case "search" :: q JsonGet _ =>
       (for {
@@ -37,15 +43,15 @@ object FullRest extends RestHelper {
       } yield item).distinct: JValue
 
     // DELETE the item in question
-    case Item(item) :: Nil JsonDelete _ => 
+    case Item(item) :: Nil JsonDelete _ =>
       Item.delete(item.id).map(a => a: JValue)
 
     // PUT adds the item if the JSON is parsable
     case Nil JsonPut Item(item) -> _ => Item.add(item): JValue
-    
-    // POST if we find the item, merge the fields from the 
+
+    // POST if we find the item, merge the fields from the
     // the POST body and update the item
-    case Item(item) :: Nil JsonPost json -> _ => 
+    case Item(item) :: Nil JsonPost json -> _ =>
       Item(mergeJson(item, json)).map(Item.add(_): JValue)
 
     // Wait for a change to the Items
@@ -62,5 +68,6 @@ object FullRest extends RestHelper {
           Item.onChange(item => satisfyRequest(item: JValue))
         }
       }
+*/
   })
 }

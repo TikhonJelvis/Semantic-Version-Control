@@ -2,9 +2,7 @@
 
 (
 
-:project-name "http_rest"
-
-:server-root "/Users/dpp/bin/ensime"
+:project-name "server"
 
 :project-package ""
 
