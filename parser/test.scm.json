@@ -37,11 +37,11 @@
 "type" : "keyword",
 "id" : 10,
 "body" : []}
-, {"value" : "x",
+, [{"value" : "x",
 "type" : "variable",
 "id" : 12,
 "body" : []}
-, {"value" : "x",
+], {"value" : "x",
 "type" : "variable",
 "id" : 12,
 "body" : []}
@@ -53,11 +53,11 @@
 "type" : "keyword",
 "id" : 14,
 "body" : []}
-, {"value" : "y",
+, [{"value" : "y",
 "type" : "variable",
 "id" : 16,
 "body" : []}
-, {"value" : "(+ x y)",
+], {"value" : "(+ x y)",
 "type" : "list",
 "id" : 19,
 "body" : [{"value" : "+",
@@ -81,22 +81,22 @@
 "type" : "keyword",
 "id" : 21,
 "body" : []}
-, {"value" : "a",
+, [{"value" : "a",
 "type" : "variable",
 "id" : 23,
 "body" : []}
-, {"value" : "(lambda (b) (+ a b x))",
+], {"value" : "(lambda (b) (+ a b x))",
 "type" : "list",
 "id" : 30,
 "body" : [{"value" : "lambda",
 "type" : "keyword",
 "id" : 24,
 "body" : []}
-, {"value" : "b",
+, [{"value" : "b",
 "type" : "variable",
 "id" : 26,
 "body" : []}
-, {"value" : "(+ a b x)",
+], {"value" : "(+ a b x)",
 "type" : "list",
 "id" : 29,
 "body" : [{"value" : "+",

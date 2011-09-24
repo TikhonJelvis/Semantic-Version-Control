@@ -187,7 +187,7 @@ jsonify l@(List ((Id "lambda"):((List args):rest))) =
      return $ FullSexp { value = show l
                        , tp = "list"
                        , idNum = lid s2
-                       , body = JSList $ (keyword:a) ++ a2}
+                       , body = JSList $ keyword:(JSList a):a2}
 jsonify l@(List ((Id "define"):((List args):rest))) = 
   do keyword <- jsonify (Id "lambda")
      ps@PS{currScope=cs,newScope=ns} <- get
@@ -198,7 +198,7 @@ jsonify l@(List ((Id "define"):((List args):rest))) =
      return $ FullSexp { value = show l
                        , tp = "list"
                        , idNum = lid s2
-                       , body = JSList $ (keyword:a) ++ a2}
+                       , body = JSList $ keyword:(JSList a):a2}
 jsonify l@(List ls)   =
   do ps'@PS{currScope=cs,newScope=ns} <- get
      let ps = setDefining False ps'
