@@ -12,6 +12,10 @@ import scala.xml.Node
 case class Commit(id: Int, parents: List[Int], tree: Option[FileTree])
 case class FileTree(id: Int, children: List[FileTree], file: Option[List[Expression]])
 case class Expression(id: Int, `type`: List[String], value: String, body: Option[List[Expression]])
+case class Diff(base: Commit, changeset: List[Change])
+trait Change
+case class Insertion(location: List[Int], body: List[Expression]) extends Change
+case class Deletion(location: List[Int]) extends Change
 
 object Commit {
   private implicit val formats =
@@ -50,6 +54,12 @@ object Commit {
 
   def find(id: Int): Box[Commit] = synchronized {
     commits.find(_.id == id)
+  }
+
+  def diff(id: Int): Box[Diff] = {
+    Commit.find(id).map {
+      commit => Diff(commit, List()) // TODO: make this actually do a diff
+    }
   }
 
   def add(commit: Commit): Commit = {
@@ -106,4 +116,46 @@ object Expression {
 
   implicit def toJson(exprs: Seq[Expression]): JValue =
     Extraction.decompose(exprs)
+}
+
+object Diff {
+  private implicit val formats =
+    net.liftweb.json.DefaultFormats
+
+  def apply(in: JValue): Box[Diff] = Helpers.tryo{in.extract[Diff]}
+
+  def unapply(in: JValue): Option[Diff] = apply(in)
+
+  def unapply(in: Any): Option[(Commit, List[Change])] = {
+    in match {
+      case diff: Diff => Some((diff.base, diff.changeset))
+      case _ => None
+    }
+  }
+
+  implicit def toJson(diff: Diff): JValue =
+    Extraction.decompose(diff)
+
+  implicit def toJson(diffs: Seq[Diff]): JValue =
+    Extraction.decompose(diffs)
+}
+
+object Change {
+  private implicit val formats =
+    net.liftweb.json.DefaultFormats
+
+  def apply(in: JValue): Box[Change] = in \\ "operation" match {
+    case JString("insertion") =>
+      Helpers.tryo{in.extract[Insertion]}
+    case JString("deletion") =>
+      Helpers.tryo{in.extract[Deletion]}
+    case op =>
+      throw new UnsupportedOperationException("Unknown operation %s".format(op))
+  }
+
+  implicit def toJson(change: Change): JValue =
+    Extraction.decompose(change)
+
+  implicit def toJson(changes: Seq[Change]): JValue =
+    Extraction.decompose(changes)
 }
