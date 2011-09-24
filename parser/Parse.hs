@@ -42,15 +42,19 @@ instance Show JSVal where
   
 data ParseState = PS { lid :: Int -- The last id number
                      , info :: TokenInfo
+                     , currScope :: Int
+                     , newScope :: Int
                      }
                   
 type TokenInfo = Map.Map TokenSummary Int
 
-data TokenSummary = TKS { tksVal :: String }
+data TokenSummary = TKS { tksVal :: String 
+                        , scope :: Int}
 instance Eq TokenSummary where
-  a == b = tksVal a == tksVal b
+  a == b = tksVal a == tksVal b && scope a == scope b
 instance Ord TokenSummary where
-  a `compare` b = tksVal a `compare` tksVal b
+  a `compare` b = (tksVal a ++ "  " ++ (show $ scope a)) `compare`
+                  (tksVal b ++ "  " ++ (show $ scope b))
 
 -- Parsing:
 specChar :: Parser Char
@@ -117,35 +121,52 @@ expressions = fmap Sequence $ expression `sepEndBy` whiteSpace
 
 -- TODO: Moar keywordz plz!
 isKeyword :: String -> Bool
-isKeyword = (`elem` ["define", "if", "cond"])
+isKeyword = (`elem` ["define", "if", "cond", "nil", "lambda", "let"])
+
+isNewScope :: String -> Bool
+isNewScope = (`elem` ["define", "lambda", "let"])
+
+-- Returns whether the given list starting with define defines a function
+isScopeCreator :: Val -> Bool
+isScopeCreator v = isFnDefine v || isLambda v || isLet v
+  where isFnDefine (List ((Id "define"):(List _):_)) = True
+        isFnDefine _ = False
+        isLambda (List ((Id "lambda"):_)) = True
+        isLambda _ = False
+        isLet (List ((Id "let"):_)) = True
+        isLet _ = False
 
 type WithID = Control.Monad.State.State ParseState
 
 jsonify :: Val -> WithID JSVal
 jsonify (Id str)  
   | isKeyword str = tkn "keyword"  str
-  | otherwise     = do ps@PS {lid=newId, info=info} <- get
-                       let currSummary = TKS {tksVal=str}
+  | otherwise     = do ps@PS {lid=newId, info=info, currScope=cs} <- get
+                       let currSummary = TKS {tksVal=str, scope=cs}
                        if Map.member currSummary info
                          then let (Just oldId) = Map.lookup currSummary info in
                            return $ FullSexp { value = str
                                              , tp = "variable"
                                              , idNum = oldId
-                                             , body = JSList []
-                                             }
-                         else do put $ incrementWithToken str ps
+                                             , body = JSList []}
+                         else do put $ incrementWithToken str cs ps
                                  return $ FullSexp { value = str
                                                    , tp = "variable"
                                                    , idNum = newId
                                                    , body = JSList []}
-jsonify (Number n) = tkn "number" $ show n
-jsonify (String str) = tkn "string" str
-jsonify (Bool bool) = tkn "keyword" $ if bool then "true" else "false"
+jsonify (Number n)    = tkn "number" $ show n
+jsonify (String str)  = tkn "string" str
+jsonify (Bool bool)   = tkn "keyword" $ if bool then "true" else "false"
 jsonify (Comment str) = tkn "comment" str
-jsonify l@(List ls) =
-  do ps <- get
-     let (a, s) = runState (fmap JSList $ mapM jsonify ls) $ incrementPS ps
-     put $ incrementPS s
+jsonify l@(List ls)   =
+  do ps@PS{currScope=cs,newScope=ns} <- get
+     let scopeCreator = isScopeCreator l
+     let (a, s) = if scopeCreator
+                  then runState (fmap JSList $ mapM jsonify ls) $
+                       incrementScope $ incrementPS ps
+                  else runState (fmap JSList $ mapM jsonify ls) $
+                       incrementPS ps
+     put $ if scopeCreator then decrementScope $ incrementPS s else incrementPS s
      return $ FullSexp { value = show l
                        , tp = "list"
                        , idNum = lid s
@@ -157,12 +178,23 @@ jsonify (Sequence ls) =
      return a
 
 incrementPS :: ParseState -> ParseState
-incrementPS PS {lid=idn, info=info} = PS {lid=idn + 1, info=info}
+incrementPS PS {lid=idn, info=info, currScope=cs, newScope=ns} =
+  PS {lid=idn + 1, info=info, currScope=cs, newScope=ns}
 
-incrementWithToken :: String -> ParseState -> ParseState
-incrementWithToken tok PS {lid=idn, info=info} =
+incrementScope :: ParseState -> ParseState
+incrementScope PS {lid=idn, info=info, currScope=cs, newScope=ns} =
+  PS {lid=idn, info=info, currScope=cs + 1, newScope=ns + 1}
+
+decrementScope :: ParseState -> ParseState
+decrementScope PS {lid=idn, info=info, currScope=cs, newScope=ns} =
+  PS {lid=idn, info=info, currScope=cs - 1, newScope=ns}
+
+incrementWithToken :: String -> Int -> ParseState -> ParseState
+incrementWithToken tok sc PS {lid=idn, info=info, currScope=cs, newScope=ns} =
   PS { lid=idn + 1
-     , info=Map.insert TKS{tksVal=tok} idn info}
+     , info=Map.insert TKS{tksVal=tok, scope=sc} idn info
+     , currScope = cs
+     , newScope = ns}
 
 -- jsonify a token of the given type with the given value.
 tkn :: String -> String -> WithID JSVal
@@ -173,12 +205,10 @@ tkn tp val = do ps <- get
                                   , idNum = lid ps
                                   , body = JSList []}
 
-summarize :: String -> TokenSummary
-summarize str = TKS {tksVal=str}
-
 -- I should be using ByteString, but meh (who cares about performance?).
 parseToJS :: String -> String
 parseToJS code = case parse expressions "TPL" code of
   Left err -> show err
-  Right val -> (evalState $ fmap show $ jsonify val) $ PS {lid=0, info=Map.empty::TokenInfo}
+  Right val -> (evalState $ fmap show $ jsonify val) $
+               PS {lid=0, info=Map.empty::TokenInfo, currScope=0, newScope=1}
   

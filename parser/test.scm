@@ -5,3 +5,4 @@
 (define (even? num) (= (% num 2) 0))
 (define x 1)
 (define x 2)
+(lambda (x) x)
