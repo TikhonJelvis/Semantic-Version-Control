@@ -181,24 +181,24 @@ jsonify l@(List ((Id "lambda"):((List args):rest))) =
   do keyword <- jsonify (Id "lambda")
      ps@PS{currScope=cs,newScope=ns} <- get
      let nps = incrementScope . incrementPS $ setDefining True ps
-     let ((JSList a), s) = runState (fmap JSList $ mapM jsonify args) nps
+     let (a, s) = runState (fmap JSList $ mapM jsonify args) nps
      let ((JSList a2), s2) = runState (fmap JSList $ mapM jsonify rest) s
      put $ decrementScope $ incrementPS s2
      return $ FullSexp { value = show l
                        , tp = "list"
                        , idNum = lid s2
-                       , body = JSList $ keyword:(JSList a):a2}
+                       , body = JSList $ keyword:a:a2}
 jsonify l@(List ((Id "define"):((List args):rest))) = 
   do keyword <- jsonify (Id "lambda")
      ps@PS{currScope=cs,newScope=ns} <- get
      let nps = incrementScope . incrementPS $ setDefining True ps
-     let ((JSList a), s) = runState (fmap JSList $ mapM jsonify args) nps
+     let (a, s) = runState (fmap JSList $ mapM jsonify args) nps
      let ((JSList a2), s2) = runState (fmap JSList $ mapM jsonify rest) s
      put $ decrementScope $ incrementPS s2
      return $ FullSexp { value = show l
                        , tp = "list"
                        , idNum = lid s2
-                       , body = JSList $ keyword:(JSList a):a2}
+                       , body = JSList $ keyword:a:a2}
 jsonify l@(List ls)   =
   do ps'@PS{currScope=cs,newScope=ns} <- get
      let ps = setDefining False ps'
