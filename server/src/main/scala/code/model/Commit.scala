@@ -10,8 +10,8 @@ import json._
 import scala.xml.Node
 
 case class Commit(id: Int, parents: List[Int], tree: FileTree)
-case class FileTree(id: Int, children: List[FileTree], file: Option[List[Expression]])
-case class Expression(id: Int, `type`: List[String], value: String, body: Option[List[Expression]])
+case class FileTree(id: Int, children: List[FileTree], file: List[Expression])
+case class Expression(id: Int, `type`: List[String], value: String, body: List[Expression])
 case class Diff(base: Commit, changeset: List[Change])
 trait Change
 case class Insertion(location: List[Int], body: Expression, operation: String = "insertion") extends Change
@@ -54,10 +54,11 @@ object Commit {
         { "id": 2, "type": ["symbol"], "value": "foo" }]}]}},
  {"id": 2, "parents": [1], "tree":
     { "id": 1, "children": [], "file":
-      [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
+      [{ "id": 1, "type": ["function"], "value": "(define foo ())", "body":
         [{ "id": 1, "type": ["keyword"], "value": "define" },
-         { "id": 2, "type": ["symbol"], "value": "foo" },
-         { "id": 3, "type": ["arguments"], "value": "()" }]}]}}]"""
+         { "id": 5, "type": ["symbol"], "value": "foo" },
+         { "id": 3, "type": ["arguments"], "value": "()" }]},
+       { "id": 2, "type": ["comment"], "value": "hello world!" }]}}]"""
 
   def find(id: Int): Box[Commit] = synchronized {
     commits.find(_.id == id)
@@ -70,7 +71,7 @@ object Commit {
           case parentId :: _ =>
             Commit.find(parentId) match {
               case Full(parent) =>
-                Full(Diff(parent, jsonDiff(FileTree.toJson(parent.tree), FileTree.toJson(commit.tree))))
+                Full(Diff(parent, exprListDiff(parent.tree.file, commit.tree.file, List(0))))
               case _ =>
                 Empty
             }
@@ -82,18 +83,23 @@ object Commit {
     }
   }
 
-  def jsonDiff(a: JValue, b: JValue): List[Change] = {
-    // For now, just do a diff from the beginning
-    val different = (a.children.zipWithIndex).zip(b.children.zipWithIndex).dropWhile {
-      case ((x, i), (y, j)) => x == y
-    }
-    val deletions = different.map {
-      case ((fromA, i), (fromB, j)) => Deletion(List(i))
-    }.reverse
-    val insertions = different.map {
-      case ((fromA, i), (fromB, j)) => Insertion(List(j), Expression(fromB).open_!)
-    }
-    return deletions ++ insertions
+  def exprListDiff(a: List[Expression], b: List[Expression], pos: List[Int]): List[Change] = (a, b) match {
+    case (Nil, Nil) =>
+      List()
+    case (a :: Nil, Nil) =>
+      List(Deletion(pos))
+    case (Nil, a :: Nil) =>
+      List(Insertion(pos, a))
+    case (a :: aTail, b :: bTail) =>
+      val newPos = pos.dropRight(1) ++ (pos.takeRight(1).map(x => x + 1))
+      exprDiff(a, b, pos) ++ exprListDiff(aTail, bTail, newPos)
+  }
+
+  def exprDiff(a: Expression, b: Expression, pos: List[Int]) : List[Change] = (a, b) match {
+    case (Expression(idA, typeA, _, bodyA), Expression(idB, typeB, _, bodyB)) if idA == idB && typeA == typeB =>
+      exprListDiff(bodyA, bodyB, pos :+ 0)
+    case _ =>
+      List(Modification(pos, b))
   }
 
   def add(commit: Commit): Commit = {
@@ -116,7 +122,7 @@ object FileTree {
 
   def unapply(in: JValue): Option[FileTree] = apply(in)
 
-  def unapply(in: Any): Option[(Int, List[FileTree], Option[List[Expression]])] = {
+  def unapply(in: Any): Option[(Int, List[FileTree], List[Expression])] = {
     in match {
       case fileTree: FileTree => Some((fileTree.id, fileTree.children, fileTree.file))
       case _ => None
@@ -138,7 +144,7 @@ object Expression {
 
   def unapply(in: JValue): Option[Expression] = apply(in)
 
-  def unapply(in: Any): Option[(Int, List[String], String, Option[List[Expression]])] = {
+  def unapply(in: Any): Option[(Int, List[String], String, List[Expression])] = {
     in match {
       case expr: Expression => Some((expr.id, expr.`type`, expr.value, expr.body))
       case _ => None
