@@ -9,13 +9,14 @@ import json._
 
 import scala.xml.Node
 
-case class Commit(id: Int, parents: List[Int], tree: Option[FileTree])
+case class Commit(id: Int, parents: List[Int], tree: FileTree)
 case class FileTree(id: Int, children: List[FileTree], file: Option[List[Expression]])
 case class Expression(id: Int, `type`: List[String], value: String, body: Option[List[Expression]])
 case class Diff(base: Commit, changeset: List[Change])
 trait Change
-case class Insertion(location: List[Int], body: List[Expression]) extends Change
-case class Deletion(location: List[Int]) extends Change
+case class Insertion(location: List[Int], body: Expression, operation: String = "insertion") extends Change
+case class Deletion(location: List[Int], operation: String = "deletion") extends Change
+case class Modification(location: List[Int], body: Expression, operation: String = "modification") extends Change
 
 object Commit {
   private implicit val formats =
@@ -29,7 +30,7 @@ object Commit {
 
   def unapply(in: JValue): Option[Commit] = apply(in)
 
-  def unapply(in: Any): Option[(Int, List[Int], Option[FileTree])] = {
+  def unapply(in: Any): Option[(Int, List[Int], FileTree)] = {
     in match {
       case commit: Commit => Some((commit.id, commit.parents, commit.tree))
       case _ => None
@@ -63,14 +64,36 @@ object Commit {
   }
 
   def diff(id: Int): Box[Diff] = {
-    Commit.find(id).map {
-      commit => commit.parents match {
-        case parent :: _ =>
-          Diff(commit, List(Insertion(List(1, 1, 3), List())))
-        case Nil =>
-          Diff(commit, List())
-      }
+    Commit.find(id) match {
+      case Full(commit) =>
+        commit.parents match {
+          case parentId :: _ =>
+            Commit.find(parentId) match {
+              case Full(parent) =>
+                Full(Diff(parent, jsonDiff(FileTree.toJson(parent.tree), FileTree.toJson(commit.tree))))
+              case _ =>
+                Empty
+            }
+          case _ =>
+            Empty
+        }
+      case _ =>
+        Empty
     }
+  }
+
+  def jsonDiff(a: JValue, b: JValue): List[Change] = {
+    // For now, just do a diff from the beginning
+    val different = (a.children.zipWithIndex).zip(b.children.zipWithIndex).dropWhile {
+      case ((x, i), (y, j)) => x == y
+    }
+    val deletions = different.map {
+      case ((fromA, i), (fromB, j)) => Deletion(List(i))
+    }.reverse
+    val insertions = different.map {
+      case ((fromA, i), (fromB, j)) => Insertion(List(j), Expression(fromB).open_!)
+    }
+    return deletions ++ insertions
   }
 
   def add(commit: Commit): Commit = {
@@ -160,6 +183,8 @@ object Change {
       Helpers.tryo{in.extract[Insertion]}
     case JString("deletion") =>
       Helpers.tryo{in.extract[Deletion]}
+    case JString("modification") =>
+      Helpers.tryo(in.extract[Modification])
     case op =>
       throw new UnsupportedOperationException("Unknown operation %s".format(op))
   }
