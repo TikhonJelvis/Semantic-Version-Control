@@ -183,7 +183,7 @@ object Commit {
   }
 
   def exprDiff(a: Expression, b: Expression, pos: List[Int]) : List[Change] = (a, b) match {
-    case (Expression(idA, typeA, _, bodyA), Expression(idB, typeB, _, bodyB)) if idA == idB && typeA == typeB =>
+    case (Expression(idA, typeA, valueA, bodyA), Expression(idB, typeB, valueB, bodyB)) if idA == idB && typeA == typeB && valueA == valueB =>
       exprListDiff(bodyA, bodyB, pos :+ 0)
     case _ =>
       List(Modification(pos, a, b))
