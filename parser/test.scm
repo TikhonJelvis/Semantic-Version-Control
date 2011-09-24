@@ -6,3 +6,5 @@
 (define x 1)
 (define x 2)
 (lambda (x) x)
+(lambda (y) (+ x y))
+(lambda (a) (lambda (b) (+ a b x)))
