@@ -1,135 +1,283 @@
-[{"value" : "(define x 1.0)",
+[{"value" : "(define list (lambda args args))",
 "type" : "list",
-"id" : 5,
+"id" : 8,
 "body" : [{"value" : "define",
 "type" : "keyword",
 "id" : 2,
 "body" : []}
-, {"value" : "x",
+, {"value" : "list",
 "type" : "variable",
 "id" : 3,
 "body" : []}
+, {"value" : "(lambda args args)",
+"type" : "list",
+"id" : 7,
+"body" : [{"value" : "lambda",
+"type" : "keyword",
+"id" : 5,
+"body" : []}
+, {"value" : "args",
+"type" : "variable",
+"id" : 6,
+"body" : []}
+, {"value" : "args",
+"type" : "variable",
+"id" : 6,
+"body" : []}
+]}
+]}
+, {"value" : "(define (map fn ls) (if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls)))))",
+"type" : "list",
+"id" : 34,
+"body" : [{"value" : "lambda",
+"type" : "keyword",
+"id" : 11,
+"body" : []}
+, {"value" : "",
+"type" : "list",
+"id" : 14,
+"body" : [{"value" : "map",
+"type" : "variable",
+"id" : 11,
+"body" : []}
+, {"value" : "fn",
+"type" : "variable",
+"id" : 12,
+"body" : []}
+, {"value" : "ls",
+"type" : "variable",
+"id" : 13,
+"body" : []}
+]}
+, {"value" : "(if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls))))",
+"type" : "list",
+"id" : 33,
+"body" : [{"value" : "if",
+"type" : "keyword",
+"id" : 15,
+"body" : []}
+, {"value" : "(null? ls)",
+"type" : "list",
+"id" : 18,
+"body" : [{"value" : "null?",
+"type" : "variable",
+"id" : 17,
+"body" : []}
+, {"value" : "ls",
+"type" : "variable",
+"id" : 13,
+"body" : []}
+]}
+, {"value" : "nil",
+"type" : "keyword",
+"id" : 19,
+"body" : []}
+, {"value" : "(cons (fn (car ls)) (map fn (cdr ls)))",
+"type" : "list",
+"id" : 32,
+"body" : [{"value" : "cons",
+"type" : "variable",
+"id" : 21,
+"body" : []}
+, {"value" : "(fn (car ls))",
+"type" : "list",
+"id" : 26,
+"body" : [{"value" : "fn",
+"type" : "variable",
+"id" : 12,
+"body" : []}
+, {"value" : "(car ls)",
+"type" : "list",
+"id" : 25,
+"body" : [{"value" : "car",
+"type" : "variable",
+"id" : 24,
+"body" : []}
+, {"value" : "ls",
+"type" : "variable",
+"id" : 13,
+"body" : []}
+]}
+]}
+, {"value" : "(map fn (cdr ls))",
+"type" : "list",
+"id" : 31,
+"body" : [{"value" : "map",
+"type" : "variable",
+"id" : 11,
+"body" : []}
+, {"value" : "fn",
+"type" : "variable",
+"id" : 12,
+"body" : []}
+, {"value" : "(cdr ls)",
+"type" : "list",
+"id" : 30,
+"body" : [{"value" : "cdr",
+"type" : "variable",
+"id" : 29,
+"body" : []}
+, {"value" : "ls",
+"type" : "variable",
+"id" : 13,
+"body" : []}
+]}
+]}
+]}
+]}
+]}
+, {"value" : "(define str "string")",
+"type" : "list",
+"id" : 39,
+"body" : [{"value" : "define",
+"type" : "keyword",
+"id" : 36,
+"body" : []}
+, {"value" : "str",
+"type" : "variable",
+"id" : 37,
+"body" : []}
+, {"value" : "string",
+"type" : "string",
+"id" : 38,
+"body" : []}
+]}
+, {"value" : "(define x 1.0)",
+"type" : "list",
+"id" : 44,
+"body" : [{"value" : "define",
+"type" : "keyword",
+"id" : 41,
+"body" : []}
+, {"value" : "x",
+"type" : "variable",
+"id" : 42,
+"body" : []}
 , {"value" : "1.0",
 "type" : "number",
-"id" : 4,
+"id" : 43,
 "body" : []}
 ]}
 , {"value" : "(define x 2.0)",
 "type" : "list",
-"id" : 9,
+"id" : 48,
 "body" : [{"value" : "define",
 "type" : "keyword",
-"id" : 7,
+"id" : 46,
 "body" : []}
 , {"value" : "x",
 "type" : "variable",
-"id" : 3,
+"id" : 42,
 "body" : []}
 , {"value" : "2.0",
 "type" : "number",
-"id" : 8,
+"id" : 47,
 "body" : []}
 ]}
 , {"value" : "(lambda (x) x)",
 "type" : "list",
-"id" : 13,
+"id" : 52,
 "body" : [{"value" : "lambda",
 "type" : "keyword",
-"id" : 12,
+"id" : 51,
 "body" : []}
 , {"value" : "",
 "type" : "list",
-"id" : 13,
+"id" : 52,
 "body" : [{"value" : "x",
 "type" : "variable",
-"id" : 12,
+"id" : 51,
 "body" : []}
 ]}
 , {"value" : "x",
 "type" : "variable",
-"id" : 12,
+"id" : 51,
 "body" : []}
 ]}
 , {"value" : "(lambda (y) (+ x y))",
 "type" : "list",
-"id" : 20,
+"id" : 59,
 "body" : [{"value" : "lambda",
 "type" : "keyword",
-"id" : 16,
+"id" : 55,
 "body" : []}
 , {"value" : "",
 "type" : "list",
-"id" : 17,
+"id" : 56,
 "body" : [{"value" : "y",
 "type" : "variable",
-"id" : 16,
+"id" : 55,
 "body" : []}
 ]}
 , {"value" : "(+ x y)",
 "type" : "list",
-"id" : 19,
+"id" : 58,
 "body" : [{"value" : "+",
 "type" : "variable",
-"id" : 18,
+"id" : 57,
 "body" : []}
 , {"value" : "x",
 "type" : "variable",
-"id" : 3,
+"id" : 42,
 "body" : []}
 , {"value" : "y",
 "type" : "variable",
-"id" : 16,
+"id" : 55,
 "body" : []}
 ]}
 ]}
+, {"value" : " Whoah, is comment! is crazy!",
+"type" : "comment",
+"id" : 60,
+"body" : []}
 , {"value" : "(lambda (a) (lambda (b) (+ a b x)))",
 "type" : "list",
-"id" : 31,
+"id" : 71,
 "body" : [{"value" : "lambda",
 "type" : "keyword",
-"id" : 23,
+"id" : 63,
 "body" : []}
 , {"value" : "",
 "type" : "list",
-"id" : 24,
+"id" : 64,
 "body" : [{"value" : "a",
 "type" : "variable",
-"id" : 23,
+"id" : 63,
 "body" : []}
 ]}
 , {"value" : "(lambda (b) (+ a b x))",
 "type" : "list",
-"id" : 30,
+"id" : 70,
 "body" : [{"value" : "lambda",
 "type" : "keyword",
-"id" : 26,
+"id" : 66,
 "body" : []}
 , {"value" : "",
 "type" : "list",
-"id" : 27,
+"id" : 67,
 "body" : [{"value" : "b",
 "type" : "variable",
-"id" : 26,
+"id" : 66,
 "body" : []}
 ]}
 , {"value" : "(+ a b x)",
 "type" : "list",
-"id" : 29,
+"id" : 69,
 "body" : [{"value" : "+",
 "type" : "variable",
-"id" : 28,
+"id" : 68,
 "body" : []}
 , {"value" : "a",
 "type" : "variable",
-"id" : 23,
+"id" : 63,
 "body" : []}
 , {"value" : "b",
 "type" : "variable",
-"id" : 26,
+"id" : 66,
 "body" : []}
 , {"value" : "x",
 "type" : "variable",
-"id" : 3,
+"id" : 42,
 "body" : []}
 ]}
 ]}

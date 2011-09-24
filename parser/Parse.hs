@@ -125,7 +125,7 @@ expression = atom
          <|> comment
          
 expressions :: Parser Val
-expressions = fmap Sequence $ expression `sepEndBy` whiteSpace
+expressions = fmap Sequence $ expression `sepEndBy` spaces
 
 -- TODO: Moar keywordz plz!
 isKeyword :: String -> Bool
