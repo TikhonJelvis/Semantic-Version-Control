@@ -4,116 +4,74 @@
 		"1", "2"
 	],
 	"currentVersion": "2",
-	"data": [{"value" : "(define (map fn ls) (if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls)))))",
-"type" : "list",
-"id" : 33,
-"body" : [{"value" : "define",
-"type" : "keyword",
-"id" : 1,
-"body" : []}, {"value" : "(map fn ls)",
-"type" : "list",
-"id" : 6,
-"body" : [{"value" : "map",
-"type" : "variable",
-"id" : 3,
-"body" : []}, {"value" : "fn",
-"type" : "variable",
-"id" : 4,
-"body" : []}, {"value" : "ls",
-"type" : "variable",
-"id" : 5,
-"body" : []}]}, {"value" : "(if (null? ls) nil (cons (fn (car ls)) (map fn (cdr ls))))",
-"type" : "list",
-"id" : 32,
-"body" : [{"value" : "if",
-"type" : "keyword",
-"id" : 8,
-"body" : []}, {"value" : "(null? ls)",
-"type" : "list",
-"id" : 12,
-"body" : [{"value" : "null?",
-"type" : "variable",
-"id" : 10,
-"body" : []}, {"value" : "ls",
-"type" : "variable",
-"id" : 11,
-"body" : []}]}, {"value" : "nil",
-"type" : "variable",
-"id" : 13,
-"body" : []}, {"value" : "(cons (fn (car ls)) (map fn (cdr ls)))",
-"type" : "list",
-"id" : 31,
-"body" : [{"value" : "cons",
-"type" : "variable",
-"id" : 15,
-"body" : []}, {"value" : "(fn (car ls))",
-"type" : "list",
-"id" : 22,
-"body" : [{"value" : "fn",
-"type" : "variable",
-"id" : 17,
-"body" : []}, {"value" : "(car ls)",
-"type" : "list",
-"id" : 21,
-"body" : [{"value" : "car",
-"type" : "variable",
-"id" : 19,
-"body" : []}, {"value" : "ls",
-"type" : "variable",
-"id" : 20,
-"body" : []}]}]}, {"value" : "(map fn (cdr ls))",
-"type" : "list",
-"id" : 30,
-"body" : [{"value" : "map",
-"type" : "variable",
-"id" : 24,
-"body" : []}, {"value" : "fn",
-"type" : "variable",
-"id" : 25,
-"body" : []}, {"value" : "(cdr ls)",
-"type" : "list",
-"id" : 29,
-"body" : [{"value" : "cdr",
-"type" : "variable",
-"id" : 27,
-"body" : []}, {"value" : "ls",
-"type" : "variable",
-"id" : 28,
-"body" : []}]}]}]}]}]}, {"value" : "(define (even? num) (= (% num 2.0) 0.0))",
-"type" : "list",
-"id" : 49,
-"body" : [{"value" : "define",
-"type" : "keyword",
-"id" : 35,
-"body" : []}, {"value" : "(even? num)",
-"type" : "list",
-"id" : 39,
-"body" : [{"value" : "even?",
-"type" : "variable",
-"id" : 37,
-"body" : []}, {"value" : "num",
-"type" : "variable",
-"id" : 38,
-"body" : []}]}, {"value" : "(= (% num 2.0) 0.0)",
-"type" : "list",
-"id" : 48,
-"body" : [{"value" : "=",
-"type" : "variable",
-"id" : 41,
-"body" : []}, {"value" : "(% num 2.0)",
-"type" : "list",
-"id" : 46,
-"body" : [{"value" : "%",
-"type" : "variable",
-"id" : 43,
-"body" : []}, {"value" : "num",
-"type" : "variable",
-"id" : 44,
-"body" : []}, {"value" : "2.0",
-"type" : "number",
-"id" : 45,
-"body" : []}]}, {"value" : "0.0",
-"type" : "number",
-"id" : 47,
-"body" : []}]}]}]
+	"data": [
+	{
+			"value": "(define num 5)",
+			"type": "list",
+			"id": "1",
+			"body": [
+				{
+					"value": "define",
+					"type": "keyword",
+					"id": "2"
+				},
+				{
+					"value": "num",
+					"type": "variable",
+					"id": "3"
+				},
+				{
+					"value": "5",
+					"type": "number",
+					"id": "4"
+				}
+			]
+	},
+	{
+			"value": "(do (some stuff (with)) depth)",
+			"type": "list",
+			"id": 5,
+			"body": [
+				{
+					"value": "do",
+					"type": "variable",
+					"id": "6"	
+				},
+				{
+					"value": "(some stuff (num))",
+					"type": "list",
+					"id": "7",
+					"body": [
+						{
+							"value": "some",
+							"type": "variable",
+							"id": "8"
+						},
+						{
+							"value": "stuff",
+							"type": "variable",
+							"id": "9"
+						},
+						{
+							"value": "(num)",
+							"type": "list",
+							"id": "10",
+							"body": [
+								{
+									"value": "num",
+									"type": "variable",
+									"id": "3"
+								}
+							]
+						}
+					]
+				},
+				{
+					"value": "depth",
+					"type": "variable",
+					"id": "12"
+				}
+			]
+	}
+	]
 }
