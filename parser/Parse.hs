@@ -10,6 +10,27 @@ data Val = Id String
          | String String
          | Bool Bool
          | Comment String
+         | Sequence [Val]
+
+instance Show Val where
+  show (String str) = show str
+  show (Id str) = str
+  show (Number flt) = show flt
+  show (Bool bool) = show bool
+  show (Comment string) = ";" ++ string
+           
+data JSVal = FullSexp { value :: String
+                      , tp    :: String
+                      , idNum :: Int
+                      , body  :: JSVal
+                      }
+           | JSList [JSVal]
+             
+instance Show JSVal where
+  show FullSexp {value=value, tp=tp, idNum=idNum, body=body} = 
+    "{\"value\" : " ++ value ++ ",\n\"type\" : " ++ tp ++ ",\n\"id\" : " ++
+    show idNum ++ ",\n\"body\" : " ++ show body ++ "}"
+  
 
 -- Parsing:
 specChar :: Parser Char
@@ -70,7 +91,12 @@ expression = atom
          <|> character
          <|> list
          <|> comment
+         
+expressions :: Parser Val
+expressions = fmap Sequence $ expression `sepEndBy` whiteSpace
 
 -- I should be using ByteString, but meh (who cares about performance?).
-parse :: String -> String
-parse code = code
+parseToJS :: String -> String
+parseToJS code = case parse expressions "TPL" code of
+  Left err -> show err
+  Right val -> show val
