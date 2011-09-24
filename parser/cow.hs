@@ -40,6 +40,16 @@ main = getArgs >>= execute
 
 -- TODO: Have this actually do stuff!
 execute :: [String] -> IO ()
-execute []           = putStr usage
+execute []             = putStr usage
 execute (command:args) = case command of
-  "help" -> putStr $ help args
+  "help"  -> putStr $ help args
+  "parse" -> if length args == 0 || length args > 2 then putStr $ help ["parse"]
+            else do code <- readFile $ args !! 0
+                    let out = if length args == 1
+                              then (args !! 0) ++ ".json"
+                              else args !! 1
+                    jsonFile code out
+                    putStrLn $ "Done parsing to " ++ out ++ "."
+
+jsonFile :: String -> FilePath -> IO ()
+jsonFile code out = writeFile out $ parseToJS code
