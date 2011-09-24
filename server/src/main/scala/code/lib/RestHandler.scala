@@ -22,19 +22,15 @@ object RestHandler extends RestHelper {
     // /api/item/count gets the item count
     case "count" :: Nil JsonGet _ => JInt(Item.inventoryItems.length)
 */
-    // /api/item/item_id gets the specified item (or a 404)
+
     case "id" :: id :: Nil Get _ =>
       for {
         commit <- Commit.find(id.toInt)
       } yield commit: JValue
 
-/*Commit.find(id.toInt) match {
-      case Some(c) =>
-        Commit.toJson(c)
-      case None =>
-        JNothing
-    }
-*//*
+    case Nil JsonPut Commit(c) -> _ => Commit.add(c): JValue
+
+/*
     // /api/item/search/foo or /api/item/search?q=foo
     case "search" :: q JsonGet _ =>
       (for {

@@ -52,9 +52,10 @@ object Commit {
     commits.find(_.id == id)
   }
 
-  def add(commit: Commit) {
+  def add(commit: Commit): Commit = {
     synchronized {
       commits = commit :: commits.filterNot(_.id == commit.id)
+      commit
     }
   }
 
