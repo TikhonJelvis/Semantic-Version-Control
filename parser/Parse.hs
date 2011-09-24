@@ -29,14 +29,13 @@ instance Show Val where
 data JSVal = FullSexp { value :: String
                       , tp    :: String
                       , idNum :: Int
-                      , body  :: JSVal
-                      }
+                      , body  :: JSVal}
            | JSList [JSVal]
              
 instance Show JSVal where
   show FullSexp {value=value, tp=tp, idNum=idNum, body=body} = 
     "{\"value\" : \"" ++ value ++ "\",\n\"type\" : \"" ++ tp ++ "\",\n\"id\" : " ++
-    show idNum ++ ",\n\"body\" : " ++ show body ++ "}"
+    show idNum ++ ",\n\"body\" : " ++ show body ++ "}\n"
   show (JSList []) = "[]"
   show (JSList ls) = "[" ++ (foldl1 ((++) . (++ ", ")) $ map show ls) ++ "]"
   
@@ -44,7 +43,8 @@ data ParseState = PS { lid :: Int -- The last id number
                      , info :: TokenInfo
                      , currScope :: Int
                      , newScope :: Int
-                     }
+                     , scopeStack :: [Int]
+                     , defining :: Bool}
                   
 type TokenInfo = Map.Map TokenSummary Int
 
@@ -55,6 +55,14 @@ instance Eq TokenSummary where
 instance Ord TokenSummary where
   a `compare` b = (tksVal a ++ "  " ++ (show $ scope a)) `compare`
                   (tksVal b ++ "  " ++ (show $ scope b))
+
+-- Returns whether the first summary with the given value and scope in the stack.
+stackSummary :: String -> [Int] -> TokenInfo -> Maybe TokenSummary
+stackSummary val [] info = Nothing
+stackSummary val (scope:rest) info =
+  if Map.member TKS{tksVal=val, scope=scope} info 
+  then Just TKS{tksVal=val, scope=scope}
+  else stackSummary val rest info
 
 -- Parsing:
 specChar :: Parser Char
@@ -140,9 +148,20 @@ type WithID = Control.Monad.State.State ParseState
 
 jsonify :: Val -> WithID JSVal
 jsonify (Id str)  
-  | isKeyword str = tkn "keyword"  str
-  | otherwise     = do ps@PS {lid=newId, info=info, currScope=cs} <- get
-                       let currSummary = TKS {tksVal=str, scope=cs}
+  | isKeyword str = tkn "keyword" str
+  | otherwise     = do ps@PS {lid=newId
+                             , info=info
+                             , currScope=cs
+                             , scopeStack=ss
+                             , defining=def} <- get
+                       let currSummary =
+                             if def
+                             then TKS { tksVal=str
+                                      , scope=cs}
+                             else case stackSummary str ss info of
+                               Nothing        -> TKS { tksVal=str
+                                                     , scope=cs}
+                               Just something -> something
                        if Map.member currSummary info
                          then let (Just oldId) = Map.lookup currSummary info in
                            return $ FullSexp { value = str
@@ -158,8 +177,31 @@ jsonify (Number n)    = tkn "number" $ show n
 jsonify (String str)  = tkn "string" str
 jsonify (Bool bool)   = tkn "keyword" $ if bool then "true" else "false"
 jsonify (Comment str) = tkn "comment" str
+jsonify l@(List ((Id "lambda"):((List args):rest))) = 
+  do keyword <- jsonify (Id "lambda")
+     ps@PS{currScope=cs,newScope=ns} <- get
+     let nps = incrementScope . incrementPS $ setDefining True ps
+     let ((JSList a), s) = runState (fmap JSList $ mapM jsonify args) nps
+     let ((JSList a2), s2) = runState (fmap JSList $ mapM jsonify rest) s
+     put $ decrementScope $ incrementPS s2
+     return $ FullSexp { value = show l
+                       , tp = "list"
+                       , idNum = lid s2
+                       , body = JSList $ (keyword:a) ++ a2}
+jsonify l@(List ((Id "define"):((List args):rest))) = 
+  do keyword <- jsonify (Id "lambda")
+     ps@PS{currScope=cs,newScope=ns} <- get
+     let nps = incrementScope . incrementPS $ setDefining True ps
+     let ((JSList a), s) = runState (fmap JSList $ mapM jsonify args) nps
+     let ((JSList a2), s2) = runState (fmap JSList $ mapM jsonify rest) s
+     put $ decrementScope $ incrementPS s2
+     return $ FullSexp { value = show l
+                       , tp = "list"
+                       , idNum = lid s2
+                       , body = JSList $ (keyword:a) ++ a2}
 jsonify l@(List ls)   =
-  do ps@PS{currScope=cs,newScope=ns} <- get
+  do ps'@PS{currScope=cs,newScope=ns} <- get
+     let ps = setDefining False ps'
      let scopeCreator = isScopeCreator l
      let (a, s) = if scopeCreator
                   then runState (fmap JSList $ mapM jsonify ls) $
@@ -178,23 +220,74 @@ jsonify (Sequence ls) =
      return a
 
 incrementPS :: ParseState -> ParseState
-incrementPS PS {lid=idn, info=info, currScope=cs, newScope=ns} =
-  PS {lid=idn + 1, info=info, currScope=cs, newScope=ns}
+incrementPS PS {lid=idn
+               , info=info
+               , currScope=cs
+               , newScope=ns
+               , scopeStack=ss
+               , defining=def} =
+  PS { lid=idn + 1
+     , info=info
+     , currScope=cs
+     , newScope=ns
+     , scopeStack=ss
+     , defining=def}
 
 incrementScope :: ParseState -> ParseState
-incrementScope PS {lid=idn, info=info, currScope=cs, newScope=ns} =
-  PS {lid=idn, info=info, currScope=cs + 1, newScope=ns + 1}
+incrementScope PS {lid=idn
+                  , info=info
+                  , currScope=cs
+                  , newScope=ns
+                  , scopeStack=ss
+                  , defining=def} =
+  PS { lid=idn
+     , info=info
+     , currScope=ns + 1
+     , newScope=ns + 1
+     , scopeStack=cs:ss
+     , defining=def}
 
 decrementScope :: ParseState -> ParseState
-decrementScope PS {lid=idn, info=info, currScope=cs, newScope=ns} =
-  PS {lid=idn, info=info, currScope=cs - 1, newScope=ns}
+decrementScope PS { lid=idn
+                  , info=info
+                  , currScope=cs
+                  , newScope=ns
+                  , scopeStack=(s:ss)
+                  , defining=def} =
+  PS { lid=idn
+     , info=info
+     , currScope=s
+     , newScope=ns
+     , scopeStack=ss
+     , defining=def}
 
 incrementWithToken :: String -> Int -> ParseState -> ParseState
-incrementWithToken tok sc PS {lid=idn, info=info, currScope=cs, newScope=ns} =
+incrementWithToken tok sc PS { lid=idn
+                             , info=info
+                             , currScope=cs
+                             , newScope=ns
+                             , scopeStack=ss
+                             , defining=def} =
   PS { lid=idn + 1
      , info=Map.insert TKS{tksVal=tok, scope=sc} idn info
      , currScope = cs
-     , newScope = ns}
+     , newScope = ns
+     , scopeStack = ss
+     , defining=def}
+  
+setDefining :: Bool -> ParseState -> ParseState
+setDefining def PS { lid=idn
+                , info=info
+                , currScope = cs
+                , newScope = ns
+                , scopeStack = ss
+                , defining=_} =
+  PS { lid=idn
+     , info=info
+     , currScope = cs
+     , newScope = ns
+     , scopeStack = ss
+     , defining=def}
 
 -- jsonify a token of the given type with the given value.
 tkn :: String -> String -> WithID JSVal
@@ -210,5 +303,10 @@ parseToJS :: String -> String
 parseToJS code = case parse expressions "TPL" code of
   Left err -> show err
   Right val -> (evalState $ fmap show $ jsonify val) $
-               PS {lid=0, info=Map.empty::TokenInfo, currScope=0, newScope=1}
+               PS { lid=0
+                  , info=Map.empty::TokenInfo
+                  , currScope=0
+                  , newScope=1
+                  , scopeStack=[]
+                  , defining=False}
   
