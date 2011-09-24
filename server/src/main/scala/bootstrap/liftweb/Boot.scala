@@ -22,7 +22,7 @@ class Boot {
 
     // Build SiteMap
     def sitemap() = SiteMap(
-      Menu.i("Home") / "index" // the simple way to declare a menu
+      Menu.i("Home") / "homepage" // the simple way to declare a menu
       )
 
     // set the sitemap.  Note if you don't want access control for
@@ -32,7 +32,7 @@ class Boot {
     //Show the spinny image when an Ajax call starts
     LiftRules.ajaxStart =
       Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
-    
+
     // Make the spinny image go away when it ends
     LiftRules.ajaxEnd =
       Full(() => LiftRules.jsArtifacts.hide("ajax-loader").cmd)
@@ -42,7 +42,7 @@ class Boot {
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) =>
-      new Html5Properties(r.userAgent))    
+      new Html5Properties(r.userAgent))
 
     LiftRules.statelessDispatchTable.append(RestHandler)
   }

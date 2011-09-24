@@ -1,0 +1,58 @@
+body {
+	background-color: black;
+	color: #FFF;
+	font-size: 16pt;
+}
+a, a:visited, a:hover {
+	color: blue;
+	margin-right: 10px;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+.svc-holder-class {
+	border: 2px solid white;
+	float: left;
+	overflow: auto;
+	padding: 10px;
+	width: 45%;
+}
+.svc-statement-holder-class {
+	white-space: pre;
+}
+.svc-variable-class {
+	color: #CCC;
+}
+.svc-comment-class {
+	color: #9F9;
+	opacity: .75;
+}
+.svc-inserted-class {
+	color: #0F0;
+	font-size: 18pt;
+	text-decoration: underline;
+}
+.svc-removed-class {
+	color: #F00;
+	font-size: 12pt;
+	text-decoration: line-through;
+}
+.svc-highlighted-class {
+	color: #F00;
+	cursor: pointer;
+}
+.svc-whitespace-class {
+	text-decoration: none;
+}
+.svc-keyword-class {
+	color: #0F0;
+}
+.svc-constant-class {
+	color: #28F;
+}
+.svc-open-paren-class, .svc-close-paren-class {
+	color: #FFF;
+	font-weight: bold;
+	text-decoration: none;
+}

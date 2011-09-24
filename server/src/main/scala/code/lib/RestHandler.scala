@@ -16,9 +16,12 @@ object RestHandler extends RestHelper {
 
   serve {
     case "commit" :: id :: Nil Get _ =>
-      for {
-        commit <- Commit.find(id.toInt)
-      } yield commit: JValue
+      if (id.isEmpty)
+        Commit.allCommits: JValue
+      else
+        for {
+          commit <- Commit.find(id.toInt)
+        } yield commit: JValue
 
     case "commit" :: Nil JsonPut Commit(c) -> _ => Commit.add(c): JValue
 
