@@ -3,6 +3,7 @@ module Parse (parseToJS) where
 
 import Control.Monad
 import Control.Monad.State
+import qualified Data.Map as Map
 import Monad
 import Text.ParserCombinators.Parsec
 
@@ -39,6 +40,17 @@ instance Show JSVal where
   show (JSList []) = "[]"
   show (JSList ls) = "[" ++ (foldl1 ((++) . (++ ", ")) $ map show ls) ++ "]"
   
+data ParseState = PS { lid :: Int -- The last id number
+                     , info :: TokenInfo
+                     }
+                  
+type TokenInfo = Map.Map TokenSummary Int
+
+data TokenSummary = TKS { tksVal :: String }
+instance Eq TokenSummary where
+  a == b = tksVal a == tksVal b
+instance Ord TokenSummary where
+  a `compare` b = tksVal a `compare` tksVal b
 
 -- Parsing:
 specChar :: Parser Char
@@ -49,7 +61,6 @@ specChar = fmap spec (oneOf "\"\\nt'"
           'n'       -> '\n'
           't'       -> '\t'
           '\\'      -> '\\'
-          '\''      -> '\'' 
           otherwise -> char
           
 stringLiteral :: Parser Val
@@ -108,42 +119,66 @@ expressions = fmap Sequence $ expression `sepEndBy` whiteSpace
 isKeyword :: String -> Bool
 isKeyword = (`elem` ["define", "if", "cond"])
 
-type WithID = Control.Monad.State.State Int
+type WithID = Control.Monad.State.State ParseState
 
--- TODO: Id numbers!
 jsonify :: Val -> WithID JSVal
-jsonify (Id str) = tkn (if isKeyword str then "keyword" else "variable") str
+jsonify (Id str)  
+  | isKeyword str = tkn "keyword"  str
+  | otherwise     = do ps@PS {lid=newId, info=info} <- get
+                       let currSummary = TKS {tksVal=str}
+                       if Map.member currSummary info
+                         then let (Just oldId) = Map.lookup currSummary info in
+                           return $ FullSexp { value = str
+                                             , tp = "variable"
+                                             , idNum = oldId
+                                             , body = JSList []
+                                             }
+                         else do put $ incrementWithToken str ps
+                                 return $ FullSexp { value = str
+                                                   , tp = "variable"
+                                                   , idNum = newId
+                                                   , body = JSList []}
 jsonify (Number n) = tkn "number" $ show n
 jsonify (String str) = tkn "string" str
 jsonify (Bool bool) = tkn "keyword" $ if bool then "true" else "false"
 jsonify (Comment str) = tkn "comment" str
 jsonify l@(List ls) =
-  do idn <- get
-     let (a, s) = runState (fmap JSList $ mapM jsonify ls) $ idn + 1
-     put $ s + 1
+  do ps <- get
+     let (a, s) = runState (fmap JSList $ mapM jsonify ls) $ incrementPS ps
+     put $ incrementPS s
      return $ FullSexp { value = show l
                        , tp = "list"
-                       , idNum = s
+                       , idNum = lid s
                        , body = a}
-                      
 jsonify (Sequence ls) =
-  do idn <- get
-     let (a, s) = runState (fmap JSList (mapM jsonify ls)) idn
-     put $ s + 1
+  do ps <- get
+     let (a, s) = runState (fmap JSList (mapM jsonify ls)) $ incrementPS ps
+     put $ incrementPS s
      return a
+
+incrementPS :: ParseState -> ParseState
+incrementPS PS {lid=idn, info=info} = PS {lid=idn + 1, info=info}
+
+incrementWithToken :: String -> ParseState -> ParseState
+incrementWithToken tok PS {lid=idn, info=info} =
+  PS { lid=idn + 1
+     , info=Map.insert TKS{tksVal=tok} idn info}
 
 -- jsonify a token of the given type with the given value.
 tkn :: String -> String -> WithID JSVal
-tkn tp val = do idn <- get
-                put $ idn + 1
+tkn tp val = do ps <- get
+                put $ incrementPS ps
                 return $ FullSexp { value = val
                                   , tp = tp
-                                  , idNum = idn
+                                  , idNum = lid ps
                                   , body = JSList []}
+
+summarize :: String -> TokenSummary
+summarize str = TKS {tksVal=str}
 
 -- I should be using ByteString, but meh (who cares about performance?).
 parseToJS :: String -> String
 parseToJS code = case parse expressions "TPL" code of
   Left err -> show err
-  Right val -> (evalState $ fmap show $ jsonify val) 0
+  Right val -> (evalState $ fmap show $ jsonify val) $ PS {lid=0, info=Map.empty::TokenInfo}
   
