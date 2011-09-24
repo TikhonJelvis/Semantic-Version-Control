@@ -1,6 +1,5 @@
 /*
-	Recursive data structure holding a single statement that can print itself out or query itself.
-	// TODO: allow querying of object
+	Recursive data structure holding a single statement that can print itself out.
 */
 function Statement(value, type, id, body) {
 	var deleted = false;
@@ -8,6 +7,12 @@ function Statement(value, type, id, body) {
 	var inserted = [];
 	this.deleteStatement = function() {
 		deleted = true;
+	}
+	this.setValue = function(val) {
+		value = val;
+	}
+	this.setDeleted = function(val) {
+		deleted = val;
 	}
 	this.insertStatement = function() {
 		isInserted = true;
@@ -26,6 +31,9 @@ function Statement(value, type, id, body) {
 	}
 	this.isConstant = function() {
 		return type == Constants.NUMBER || type == Constants.STRING;
+	}
+	this.isComment = function() {
+		return type == Constants.COMMENT;
 	}
 	this.get = function(pos) {
 		return body[pos];
@@ -56,6 +64,14 @@ function Statement(value, type, id, body) {
 			this.hasNext = function() {
 				return !!body[index];
 			};
+			this.hasNextNonComment = function() {
+				for(var i = index; i < body.length; i++) {
+					if (!body[i].isComment()) {
+						return true;
+					}
+				}
+				return false;
+			};
 			this.next = function() {
 				return body[index++];
 			};
@@ -67,8 +83,9 @@ function Statement(value, type, id, body) {
 			};
 		}
 	}
-	this.getPrettyNode = function(optWhitespace, optDeleted, optInserted, wasKeyword, closeParen) {
+	this.getPrettyNode = function(optWhitespace, optDeleted, optInserted, wasKeyword, closeParen, indent) {
 		closeParen = closeParen ? closeParen : 0;
+		indent = indent ? indent : 0;
 		var div;
 		var deleted = optDeleted || this.isDeleted();
 		var inserted = optInserted || this.isInserted();
@@ -76,14 +93,17 @@ function Statement(value, type, id, body) {
 			div = Statics.getStatementHolderNode(id);
 			if (!wasKeyword) {
 				div.append(Statics.getBreakNode());
+				div.append(Statics.getWhitespaceNode(indent));
+			} else {
+				div.removeClass(Constants.STATEMENT_HOLDER_CLASS);
+				if (deleted) {
+					span.addClass(Constants.REMOVED_CLASS);
+				}
+				if (inserted) {
+					span.addClass(Constants.INSERTED_CLASS);
+				}
 			}
 			var span = Statics.getOpenFuncNode(id);
-			if (deleted) {
-				span.addClass(Constants.REMOVED_CLASS);
-			}
-			if (inserted) {
-				span.addClass(Constants.INSERTED_CLASS);
-			}
 			div.append(span);
 			var iterator = this.iterator();
 			var wasFunction = false;
@@ -91,7 +111,7 @@ function Statement(value, type, id, body) {
 			while (iterator.hasNext()) {
 				var next = iterator.next();
 				span = next.getPrettyNode(iterator.hasNext() ? !iterator.peek().isFunction() : false,
-					deleted, inserted, wasKeyword, iterator.hasNext() ? 0 : ++closeParen);
+					deleted, inserted, wasKeyword, iterator.hasNextNonComment() ? 0 : ++closeParen, indent + 4);
 				if (deleted) {
 					span.addClass(Constants.REMOVED_CLASS);
 				}
@@ -100,25 +120,23 @@ function Statement(value, type, id, body) {
 				}
 				if (wasFunction && !next.isFunction() && !next.isKeyword()) {
 					div.append(Statics.getBreakNode());
+					div.append(Statics.getWhitespaceNode(indent));
 				} else if (!next.isFunction()) {
 					span.removeClass(Constants.STATEMENT_HOLDER_CLASS);
 				}
 				wasFunction = next.isFunction();
+				wasComment = next.isComment();
 				wasKeyword = next.isKeyword();
 				div.append(span);
 			}
 		} else if (this.isKeyword()) {
-			div = Statics.getKeywordNode(value, id, !!optWhitespace, closeParen);
+			div = Statics.getKeywordNode(value, id, !!optWhitespace, closeParen, this);
 		} else if (this.isConstant()) {
-			div = Statics.getConstantNode(value, id, !!optWhitespace, closeParen);
+			div = Statics.getConstantNode(value, id, !!optWhitespace, closeParen, this);
+		} else if (this.isComment()) {
+			div = Statics.getCommentNode(value, id, !!optWhitespace, 0, this);
 		} else {
-			div = Statics.getVariableNode(value, id, !!optWhitespace, closeParen);
-		}
-		if (deleted) {
-			div.addClass(Constants.REMOVED_CLASS);
-		}
-		if (inserted) {
-			div.addClass(Constants.INSERTED_CLASS);
+			div = Statics.getVariableNode(value, id, !!optWhitespace, closeParen, this);
 		}
 		return div;
 	}
@@ -126,15 +144,21 @@ function Statement(value, type, id, body) {
 		if (this.isFunction()) {
 			var text = Constants.OPEN_PAREN;
 			var iterator = this.iterator();
+			var good = false;
 			while (iterator.hasNext()) {
-				text += iterator.next().getText()
-				if (iterator.hasNext()) {
+				var t = iterator.next().getText();
+				if (!t.length) continue;
+				text += t;
+				if (iterator.hasNextNonComment()) {
 					text += Constants.WHITESPACE;
+				} else {
+					text += Constants.CLOSE_PAREN;
 				}
+				good = true;
 			}
-			return text + Constants.CLOSE_PAREN;
+			return (good && !this.isDeleted()) ? text : '';
 		} else {
-			return value;
+			return this.isDeleted() ? '' : this.isComment() ? (value + "\n") : value;
 		}
 	}
 }

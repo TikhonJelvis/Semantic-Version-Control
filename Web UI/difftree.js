@@ -32,8 +32,6 @@ function diffTree(tree) {
 			} else if (diff.operation == Constants.INSERT) {
 				var parser = new ParseTree(diff.body);
 				inserted[diff.indices[0]] = parser;
-			} else if (diff.operation == Constants.RENAME || diff.operation == Constants.MOVE) {
-				throw "RENAME and MOVE not currently supported"; //TODO: Fix this
 			}
 		}
 		for(var j = inserted.length; j >= 0; j--) {
