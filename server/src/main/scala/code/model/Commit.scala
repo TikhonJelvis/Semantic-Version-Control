@@ -11,11 +11,17 @@ import scala.xml.Node
 
 case class Commit(id: Int, parents: List[Int], body: List[Expression])
 case class Expression(id: Int, `type`: String, value: String, body: List[Expression])
-case class Diff(base: Commit, changeset: List[Change])
-trait Change
+case class Diff(base: Commit, changeset: List[Change], annotations: List[Annotation])
+trait Change {
+  def location: List[Int]
+  def body: Expression
+  def operation: String
+}
 case class Insertion(location: List[Int], body: Expression, operation: String = "insertion") extends Change
-case class Deletion(location: List[Int], operation: String = "deletion") extends Change
-case class Modification(location: List[Int], body: Expression, operation: String = "modification") extends Change
+case class Deletion(location: List[Int], body: Expression, operation: String = "deletion") extends Change
+case class Modification(location: List[Int], oldBody: Expression, body: Expression, operation: String = "modification") extends Change
+trait Annotation
+case class OnlyComments(annotation: String = "onlyComments") extends Annotation
 
 object Commit {
   private implicit val formats =
@@ -44,28 +50,82 @@ object Commit {
 
   def allCommits: Seq[Commit] = commits
 
-  private def data = "[]"
-// """
-// [{"id": 1, "parents": [], "tree":
-//    { "id": 1, "children": [], "file":
-//      [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
-//        [{ "id": 1, "type": ["keyword"], "value": "define" },
-//         { "id": 2, "type": ["symbol"], "value": "foo" }]}]}},
-//  {"id": 2, "parents": [1], "tree":
-//     { "id": 1, "children": [], "file":
-//       [{ "id": 1, "type": ["function"], "value": "(define foo (x) (+ x 1))", "body":
-//         [{ "id": 1, "type": ["keyword"], "value": "define" },
-//          { "id": 2, "type": ["symbol"], "value": "foo" },
-//          { "id": 3, "type": ["arguments"], "value": "()", "body": [] }]},
-//        { "id": 2, "type": ["function"], "value": "(define bar)", "body":
-//         [{ "id": 1, "type": ["keyword"], "value": "define" },
-//          { "id": 2, "type": ["symbol"], "value": "bar" }]}]}},
-//  {"id": 3, "parents": [1], "tree":
-//     { "id": 1, "children": [], "file":
-//       [{ "id": 1, "type": ["function"], "value": "(define foo)", "body":
-//         [{ "id": 1, "type": ["keyword"], "value": "define" },
-//          { "id": 2, "type": ["symbol"], "value": "foo" }]},
-//        { "id": 2, "type": ["comment"], "value": "; hello world!" }]}}]"""
+  private def data = """
+[{
+  "id":1,
+  "parents":[],
+  "body":[{
+    "id":5,
+    "type":"list",
+    "value":"(define (id n) n)",
+    "body":[{
+      "id":3,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":5,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":3,
+        "type":"variable",
+        "value":"id",
+        "body":[]
+      },{
+        "id":4,
+        "type":"variable",
+        "value":"n",
+        "body":[]
+      }]
+    },{
+      "id":4,
+      "type":"variable",
+      "value":"n",
+      "body":[]
+    }]
+  }]
+},{
+  "id":2,
+  "parents":[1],
+  "body":[{
+    "id":5,
+    "type":"list",
+    "value":"(define (id n) n)",
+    "body":[{
+      "id":3,
+      "type":"keyword",
+      "value":"lambda",
+      "body":[]
+    },{
+      "id":5,
+      "type":"list",
+      "value":"",
+      "body":[{
+        "id":3,
+        "type":"variable",
+        "value":"id",
+        "body":[]
+      },{
+        "id":4,
+        "type":"variable",
+        "value":"n",
+        "body":[]
+      }]
+    },{
+      "id":4,
+      "type":"variable",
+      "value":"n",
+      "body":[]
+    }]
+  },{
+    "id":6,
+    "type":"comment",
+    "value":"hello",
+    "body":[]
+  }]
+}]
+"""
 
   def find(id: Int): Box[Commit] = synchronized {
     commits.find(_.id == id)
@@ -78,7 +138,8 @@ object Commit {
           case parentId :: _ =>
             Commit.find(parentId) match {
               case Full(parent) =>
-                Full(Diff(parent, exprListDiff(parent.body, commit.body, List(0))))
+                val changes = exprListDiff(parent.body, commit.body, List(0))
+                Full(Diff(parent, changes, annotate(changes, parent)))
               case _ =>
                 Empty
             }
@@ -90,13 +151,32 @@ object Commit {
     }
   }
 
+  def annotate(changes: List[Change], parent: Commit): List[Annotation] = {
+    if (changes.forall {
+      case Modification(_, oldBody, body, _) =>
+        body.`type` == "comment" && oldBody.`type` == "comment"
+      case c: Change =>
+        c.body.`type` == "comment"
+    }) {
+      List(OnlyComments())
+    } else {
+      List()
+    }
+  }
+
   def exprListDiff(a: List[Expression], b: List[Expression], pos: List[Int]): List[Change] = (a, b) match {
     case (Nil, Nil) =>
       List()
     case (a :: Nil, Nil) =>
-      List(Deletion(pos))
+      List(Deletion(pos, a))
     case (Nil, a :: Nil) =>
       List(Insertion(pos, a))
+    case (a :: aTail, Nil) =>
+      val newPos = pos.dropRight(1) ++ (pos.takeRight(1).map(x => x + 1))
+      List(Deletion(pos, a)) ++ exprListDiff(aTail, Nil, newPos)
+    case (Nil, a :: aTail) =>
+      val newPos = pos.dropRight(1) ++ (pos.takeRight(1).map(x => x + 1))
+      List(Insertion(pos, a)) ++ exprListDiff(Nil, aTail, newPos)
     case (a :: aTail, b :: bTail) =>
       val newPos = pos.dropRight(1) ++ (pos.takeRight(1).map(x => x + 1))
       exprDiff(a, b, pos) ++ exprListDiff(aTail, bTail, newPos)
@@ -106,7 +186,7 @@ object Commit {
     case (Expression(idA, typeA, _, bodyA), Expression(idB, typeB, _, bodyB)) if idA == idB && typeA == typeB =>
       exprListDiff(bodyA, bodyB, pos :+ 0)
     case _ =>
-      List(Modification(pos, b))
+      List(Modification(pos, a, b))
   }
 
   def add(commit: Commit): Commit = {
@@ -120,7 +200,7 @@ object Commit {
     synchronized {
       val (commitId, parents) = commits match {
         case Nil => (1, List())
-        case _ => (commits.last.id + 1, List(commits.last.id))
+        case _ => (commits.head.id + 1, List(commits.head.id))
       }
       val commit = Commit(commitId, parents, exprs)
       Commit.add(commit)
@@ -162,9 +242,9 @@ object Diff {
 
   def unapply(in: JValue): Option[Diff] = apply(in)
 
-  def unapply(in: Any): Option[(Commit, List[Change])] = {
+  def unapply(in: Any): Option[(Commit, List[Change], List[Annotation])] = {
     in match {
-      case diff: Diff => Some((diff.base, diff.changeset))
+      case diff: Diff => Some((diff.base, diff.changeset, diff.annotations))
       case _ => None
     }
   }
@@ -195,5 +275,23 @@ object Change {
     Extraction.decompose(change)
 
   implicit def toJson(changes: Seq[Change]): JValue =
+    Extraction.decompose(changes)
+}
+
+object Annotation {
+  private implicit val formats =
+    net.liftweb.json.DefaultFormats
+
+  def apply(in: JValue): Box[Annotation] = in \\ "annotation" match {
+    case JString("onlyComments") =>
+      Helpers.tryo{in.extract[OnlyComments]}
+    case op =>
+      throw new UnsupportedOperationException("Unknown operation %s".format(op))
+  }
+
+  implicit def toJson(change: Annotation): JValue =
+    Extraction.decompose(change)
+
+  implicit def toJson(changes: Seq[Annotation]): JValue =
     Extraction.decompose(changes)
 }

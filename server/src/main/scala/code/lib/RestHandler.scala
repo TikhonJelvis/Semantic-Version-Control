@@ -32,10 +32,9 @@ object RestHandler extends RestHelper {
         diff <- Commit.diff(id.toInt)
       } yield diff: JValue
 
-    case "diff" :: Nil Get _ =>
-      for {
-        diff <- Commit.diff()
-      } yield diff: JValue
+    case "commit" :: Nil Get _ => {
+      Commit.allCommits: JValue
+    }
 
     // Commit list
     // Diff 
