@@ -16,7 +16,7 @@ data Val = Id String
          | Sequence [Val]
 
 instance Show Val where
-  show (String str) = show str
+  show (String str) = init . tail . show $ show str
   show (Id str) = str
   show (Number flt) = show flt
   show (Bool bool) = show bool
@@ -34,10 +34,10 @@ data JSVal = FullSexp { value :: String
              
 instance Show JSVal where
   show FullSexp {value=value, tp=tp, idNum=idNum, body=body} = 
-    "{\"value\" : \"" ++ value ++ "\",\n\"type\" : \"" ++ tp ++ "\",\n\"id\" : " ++
-    show idNum ++ ",\n\"body\" : " ++ show body ++ "}\n"
-  show (JSList []) = "[]"
-  show (JSList ls) = "[" ++ (foldl1 ((++) . (++ ", ")) $ map show ls) ++ "]"
+    " {\"value\" : \"" ++ value ++ "\" , \n\"type\" : \"" ++ tp ++ "\",\n\"id\" : " ++
+    show idNum ++ ", \n \"body\" : " ++ show body ++ "} \n"
+  show (JSList []) = "[] "
+  show (JSList ls) = " [" ++ (foldl1 ((++) . (++ ", ")) $ map show ls) ++ "] "
   
 data ParseState = PS { lid :: Int -- The last id number
                      , info :: TokenInfo
@@ -127,12 +127,11 @@ expression = atom
 expressions :: Parser Val
 expressions = fmap Sequence $ expression `sepEndBy` spaces
 
--- TODO: Moar keywordz plz!
 isKeyword :: String -> Bool
 isKeyword = (`elem` ["define", "if", "cond", "nil", "lambda", "let"])
 
 isNewScope :: String -> Bool
-isNewScope = (`elem` ["define", "lambda", "let"])
+isNewScope = (`elem` ["define", "lambda"])
 
 -- Returns whether the given list starting with define defines a function
 isScopeCreator :: Val -> Bool

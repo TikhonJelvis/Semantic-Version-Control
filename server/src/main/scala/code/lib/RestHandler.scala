@@ -22,9 +22,22 @@ object RestHandler extends RestHelper {
 
     case "commit" :: Nil JsonPut Commit(c) -> _ => Commit.add(c): JValue
 
+    case "commit" :: Nil JsonPost exprs -> _ => {
+      println(exprs)
+      Commit.add(exprs.extract[List[Expression]]): JValue
+    }
+
     case "diff" :: id :: Nil Get _ =>
       for {
         diff <- Commit.diff(id.toInt)
       } yield diff: JValue
+
+    case "diff" :: Nil Get _ =>
+      for {
+        diff <- Commit.diff()
+      } yield diff: JValue
+
+    // Commit list
+    // Diff 
   }
 }

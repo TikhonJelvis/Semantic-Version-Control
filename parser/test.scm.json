@@ -126,7 +126,7 @@
 ]}
 ]}
 ]}
-, {"value" : "(define str "string")",
+, {"value" : "(define str \"string\")",
 "type" : "list",
 "id" : 39,
 "body" : [{"value" : "define",
