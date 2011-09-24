@@ -1,0 +1,30 @@
+body {
+	background-color: black;
+}
+.svc-open-paren-class, .svc-close-paren-class {
+	color: #FFF;
+	font-weight: bold;
+}
+.svc-statement-holder-class {
+	left: 10px;
+	position: relative;
+	white-space: pre;
+}
+.svc-variable-class {
+	color: #AAA;
+}
+.svc-keyword-class {
+	color: #0F0;
+}
+.svc-constant-class {
+	color: #00F;
+}
+.svc-highlighted-class {
+	color: #F00;
+}
+.svc-removed-class {
+	color: #F00;
+}
+.svc-inserted-class {
+	color: #0F0;
+}
