@@ -13,15 +13,17 @@ usage =
   [$here|Cow - the semantic version control system!
 
 usage: cow <command>
+
 where <command> is one of:
   - help
   - parse
+  - commit
 
 For more information on the commands, use cow help <command>.
 |]
 
 help :: [String] -> String
-help []             = help ["help"]
+help []             = usage
 help (command:rest) = case command of
   "help" ->
     [$here|usage: cow help <command>
@@ -43,7 +45,6 @@ Parses the given file and commits it to the server.
 main :: IO ()
 main = getArgs >>= execute
 
--- TODO: Have this actually do stuff!
 execute :: [String] -> IO ()
 execute []             = putStr usage
 execute (command:args) = case command of
