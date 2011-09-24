@@ -1,6 +1,8 @@
 -- Parse Scheme code into JSON. w00t
 module Parse (parseToJS) where
 
+import Control.Monad
+import Control.Monad.State
 import Monad
 import Text.ParserCombinators.Parsec
 
@@ -106,39 +108,42 @@ expressions = fmap Sequence $ expression `sepEndBy` whiteSpace
 isKeyword :: String -> Bool
 isKeyword = (`elem` ["define", "if", "cond"])
 
+type WithID = Control.Monad.State.State Int
+
 -- TODO: Id numbers!
-jsonify :: Val -> JSVal
-jsonify (Id str) = FullSexp { value = str
-                            , tp = if isKeyword str
-                                   then "keyword"
-                                   else "variable"
-                            , idNum = 10
-                            , body = JSList []}
-jsonify (Number n) = FullSexp { value = show n
-                              , tp = "number"
-                              , idNum = 10
-                              , body = JSList []}
-jsonify (String str) = FullSexp { value = str
-                                , tp = "string"
-                                , idNum = 10
-                                , body = JSList []}
-jsonify (Bool bool) = FullSexp { value = if bool then "true" else "false"
-                               , tp = "keyword"
-                               , idNum = 10
-                               , body = JSList []}
-jsonify (Comment str) = FullSexp { value = str
-                                 , tp = "comment"
-                                 , idNum = 10
-                                 , body = JSList []}
-jsonify l@(List ls) = FullSexp { value = show l
-                               , tp = "list"
-                               , idNum = 10
-                               , body = JSList $ map jsonify ls}
+jsonify :: Val -> WithID JSVal
+jsonify (Id str) = tkn (if isKeyword str then "keyword" else "variable") str
+jsonify (Number n) = tkn "number" $ show n
+jsonify (String str) = tkn "string" str
+jsonify (Bool bool) = tkn "keyword" $ if bool then "true" else "false"
+jsonify (Comment str) = tkn "comment" str
+jsonify l@(List ls) =
+  do idn <- get
+     let (a, s) = runState (fmap JSList $ mapM jsonify ls) $ idn + 1
+     put $ s + 1
+     return $ FullSexp { value = show l
+                       , tp = "list"
+                       , idNum = s
+                       , body = a}
                       
-jsonify (Sequence ls) = JSList $ map jsonify ls
+jsonify (Sequence ls) =
+  do idn <- get
+     let (a, s) = runState (fmap JSList (mapM jsonify ls)) idn
+     put $ s + 1
+     return a
+
+-- jsonify a token of the given type with the given value.
+tkn :: String -> String -> WithID JSVal
+tkn tp val = do idn <- get
+                put $ idn + 1
+                return $ FullSexp { value = val
+                                  , tp = tp
+                                  , idNum = idn
+                                  , body = JSList []}
 
 -- I should be using ByteString, but meh (who cares about performance?).
 parseToJS :: String -> String
 parseToJS code = case parse expressions "TPL" code of
   Left err -> show err
-  Right val -> show $ jsonify val
+  Right val -> (evalState $ fmap show $ jsonify val) 0
+  
