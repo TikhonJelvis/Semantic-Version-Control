@@ -1,3 +1,5 @@
+I have a newer version of the same idea called [Cow](http://github.com/TikhonJelvis/Cow).
+
 See https://docs.google.com/document/pub?id=1rCgag9aDUA1W8T9pfZDeClnEDwxvJm51Dwh-KHBkYsM
 
 # Cow - The Semantic Version Control System!
